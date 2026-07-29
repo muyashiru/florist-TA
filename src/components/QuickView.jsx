@@ -44,7 +44,7 @@ export default function QuickView({ product, onClose }) {
   const totalPrice = product.price + addonsTotal;
 
   const generateLinkWithAddons = () => {
-    const phoneNumber = "6281367931303";
+    const phoneNumber = "62895339549364";
 
     let text = `Halo admin Jalé Florist, saya ingin memesan produk berikut:\n\n`;
     text += `*Produk:* ${product.name}\n`;

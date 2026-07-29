@@ -8,6 +8,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    watch: {
+      ignored: ['**/server/**', '**/.wwebjs_auth/**', '**/.baileys_auth/**', '**/public/images/uploads/**']
+    },
     middlewares: [
       {
         name: 'heic-mime-type',

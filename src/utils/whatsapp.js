@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = "6281367931303";
+export const WHATSAPP_NUMBER = "62895339549364";
 
 export const formatPrice = (price) => {
   if (price === 0) return "Ask admin for price";
