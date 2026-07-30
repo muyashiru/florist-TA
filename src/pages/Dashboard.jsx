@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('All Chat');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -18,6 +18,8 @@ export default function Dashboard() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [hasValidated, setHasValidated] = useState(false);
+  const [hideEscalation, setHideEscalation] = useState(false);
+  const [scenarios, setScenarios] = useState([]);
 
   const EMOJI_LIST = ['😊', '😂', '🌸', '💐', '❤️', '🙏', '👍', '✨', '🎉', '🔥'];
 
@@ -29,6 +31,12 @@ export default function Dashboard() {
     }
     fetchContacts();
     const interval = setInterval(fetchContacts, 5000); // Polling tiap 5 detik agar realtime
+
+    fetch('http://localhost:3000/api/scenarios')
+      .then(r => r.json())
+      .then(d => { if(d.success) setScenarios(d.scenarios); })
+      .catch(console.error);
+
     return () => clearInterval(interval);
   }, [navigate]);
 
@@ -36,6 +44,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedContact) {
       setHasValidated(false); // Munculkan kembali tombol validasi jika beralih pelanggan
+      setHideEscalation(false); // Reset status hide escalation
       fetchMessages(selectedContact.no_wa);
       const interval = setInterval(() => fetchMessages(selectedContact.no_wa), 3000); // Polling chat
       return () => clearInterval(interval);
@@ -262,6 +271,8 @@ export default function Dashboard() {
     return matchesSearch;
   });
 
+  const activeContact = selectedContact ? (contacts.find(c => c.no_wa === selectedContact.no_wa) || selectedContact) : null;
+
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans text-gray-800">
       
@@ -308,22 +319,30 @@ export default function Dashboard() {
 
         {/* Filter Chips */}
         <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide border-b border-gray-100">
-          {['All', 'AI On', 'AI Off'].map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
-                activeTab === tab 
-                  ? 'border-green-300 bg-green-50 text-green-700' 
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {tab} {tab === 'All' ? '99+' : ''}
-            </button>
-          ))}
-          <button className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
-            Belum Dibaca 99+
-          </button>
+          {['All Chat', 'AI On', 'AI Off'].map(tab => {
+            let badgeCount = 0;
+            if (tab === 'AI Off') {
+              badgeCount = contacts.filter(c => c.is_ai_active === 0).length;
+            }
+            return (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
+                  activeTab === tab 
+                    ? 'border-green-300 bg-green-50 text-green-700' 
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {tab}
+                {badgeCount > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none font-bold ${activeTab === tab ? 'bg-green-600 text-white' : 'bg-red-500 text-white'}`}>
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Contact List */}
@@ -376,7 +395,11 @@ export default function Dashboard() {
                         {isAiOn ? (
                           <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-semibold border border-blue-100">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            AI Draft
+                            Admin AI
+                          </span>
+                        ) : c.last_message?.startsWith('[ESCALATION]') ? (
+                          <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 rounded text-[10px] font-semibold border border-orange-200">
+                            Need Help
                           </span>
                         ) : (
                           <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-semibold border border-gray-200">
@@ -385,7 +408,7 @@ export default function Dashboard() {
                         )}
                         <span className="text-gray-400 text-xs shrink-0">✓</span>
                         <p className="text-[13px] text-gray-500 truncate leading-snug">
-                          {c.last_message || 'Belum ada pesan'}
+                          {c.last_message?.startsWith('[ESCALATION]') ? '⚠️ AI Butuh Bantuan' : c.last_message || 'Belum ada pesan'}
                         </p>
                       </div>
                     </div>
@@ -417,6 +440,42 @@ export default function Dashboard() {
               </div>
               
               <div className="flex items-center gap-2">
+                {selectedContact.no_wa === '0895339549364_SANDBOX' && (
+                  <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
+                    <select 
+                      id="dashboardScenarioSelect" 
+                      className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-[#00BFA5]"
+                    >
+                      <option value="">-- Pilih Skenario --</option>
+                      {scenarios.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={async () => {
+                        const id = document.getElementById('dashboardScenarioSelect').value;
+                        if (!id) return alert('Pilih skenario dulu!');
+                        if (!confirm('Load skenario ini? Obrolan saat ini akan tertimpa.')) return;
+                        try {
+                          const res = await fetch('http://localhost:3000/api/scenarios/'+id+'/load', { method: 'POST' });
+                          const data = await res.json();
+                          if (data.success) {
+                            alert('Skenario berhasil diload!');
+                            fetchMessages(selectedContact.no_wa);
+                          } else {
+                            alert('Gagal: ' + data.message);
+                          }
+                        } catch(e) {
+                          alert('Error: ' + e.message);
+                        }
+                      }}
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded transition-colors"
+                    >
+                      Load
+                    </button>
+                  </div>
+                )}
+                
                 <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-50 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
                 <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-50 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg></button>
                 
@@ -424,7 +483,7 @@ export default function Dashboard() {
                 <button 
                   onClick={toggleAiStatus}
                   className={`ml-2 px-4 py-1.5 rounded-full border text-sm font-bold flex items-center gap-2 transition-all shadow-sm ${
-                    selectedContact.is_ai_active 
+                    activeContact?.is_ai_active 
                       ? 'border-[#00BFA5] text-[#00BFA5] hover:bg-[#E0F2F1]' 
                       : 'border-gray-300 text-gray-500 hover:bg-gray-50'
                   }`}
@@ -432,7 +491,7 @@ export default function Dashboard() {
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                   </svg>
-                  {selectedContact.is_ai_active ? 'Halo Assistant' : 'Human Mode'}
+                  {activeContact?.is_ai_active ? 'Halo Assistant' : 'Human Mode'}
                 </button>
               </div>
             </div>
@@ -449,6 +508,7 @@ export default function Dashboard() {
               {messages.map((msg, idx) => {
                 // Jangan render kalau admin sudah delete for me
                 if (msg.is_deleted_by_admin) return null;
+                if (msg.message_text?.startsWith('[ESCALATION]')) return null; // Sembunyikan bubble eskalasi
 
                 const isAdmin = msg.sender === 'ai' || msg.sender === 'admin';
                 const isDeletedForAll = msg.is_deleted_for_everyone;
@@ -518,64 +578,25 @@ export default function Dashboard() {
                             />
                           ) : (
                             <>
-                              {msg.message_text.includes('[Mengirimkan Foto/Bukti Transfer]') && !isAdmin ? (
+                              {msg.message_text.includes('[Mengirimkan Foto]') && !isAdmin ? (
                                 <div className="mb-2 border border-gray-200 rounded-lg p-3 bg-gray-50/50">
                                   <div className="italic text-sm opacity-80 mb-3 flex items-center gap-2">
-                                    📸 Customer melampirkan gambar/bukti transfer
-                                  </div>
-                                  
-                                  {/* Tombol Verifikasi Pembayaran khusus Admin */}
-                                  <div className="flex gap-2">
-                                    <button 
-                                      onClick={handleAcceptPaymentAndOrderCourier} 
-                                      className="flex-1 bg-[#00BFA5] text-white text-xs font-bold py-2 rounded shadow-sm hover:bg-[#00897B] transition-colors"
-                                    >
-                                      ✅ Terima & Panggil Kurir
-                                    </button>
-                                    <button 
-                                      onClick={() => handleSendMessage(new Event('submit'), "Mohon maaf Kak, foto bukti transfernya tidak terbaca/belum masuk. Bisa tolong dicek kembali? 🙏")} 
-                                      className="flex-1 bg-white border border-red-200 text-red-500 text-xs font-bold py-2 rounded shadow-sm hover:bg-red-50 transition-colors"
-                                    >
-                                      ❌ Tolak
-                                    </button>
+                                    📸 Customer melampirkan foto/gambar
                                   </div>
                                 </div>
                               ) : null}
                               
                               {/* Teks Pesan Biasa */}
                               {(() => {
-                                let displayMsg = msg.message_text.replace('[Mengirimkan Foto/Bukti Transfer]', '').trim();
+                                let displayMsg = msg.message_text.replace('[Mengirimkan Foto]', '').trim();
                                 let catalogHtml = null;
                                 
-                                // Jika ada [KATALOG] dalam string
-                                if (displayMsg.includes('[KATALOG]')) {
-                                  const parts = displayMsg.split('[KATALOG]');
-                                  displayMsg = parts[0].trim();
-                                  try {
-                                    const catalogData = JSON.parse(parts[1].trim());
-                                    if (catalogData && catalogData.length > 0) {
-                                      catalogHtml = (
-                                        <div className="mt-3 border-t border-gray-200/50 pt-3">
-                                          <div className="text-[12px] font-bold text-gray-700 mb-2">🌸 Rekomendasi Pilihan:</div>
-                                          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ maxWidth: '300px' }}>
-                                            {catalogData.map((p, pIdx) => (
-                                              <div key={pIdx} className="flex-shrink-0 w-[120px] bg-white border border-gray-100 rounded-lg p-1.5 text-center shadow-sm">
-                                                <img src={p.image_url} alt={p.name} className="w-full h-[100px] object-cover rounded-md" />
-                                                <div className="text-[10px] font-bold mt-1.5 text-gray-700 h-[28px] overflow-hidden leading-tight">{p.name}</div>
-                                                <div className="text-[10px] text-[#00BFA5] font-bold mt-0.5">Rp {p.price.toLocaleString('id-ID')}</div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                  } catch(e) { console.error('Gagal parse JSON katalog'); }
-                                }
-                                
+
                                 // Jika (fallback) AI mentah-mentah menampilkan tulisan [HANDOFF] tanpa dibersihkan backend
                                 if (displayMsg.includes('[HANDOFF]')) {
                                   displayMsg = displayMsg.replace(/\[HANDOFF\]/g, '').trim();
                                 }
+                                
                                 
                                 // Jika ada [IMAGE] di tengah string (QRIS)
                                 if (displayMsg.includes('[IMAGE]')) {
@@ -588,34 +609,10 @@ export default function Dashboard() {
                                         </div>
                                     );
                                 }
-                                
-                                // Jika ada Eskalasi
-                                let escalationHtml = null;
-                                if (displayMsg.includes('[ESCALATION]')) {
-                                  displayMsg = displayMsg.replace('[ESCALATION]', '').trim();
-                                  escalationHtml = (
-                                    <div className="mt-3 border border-orange-200 bg-orange-50 rounded-lg p-3">
-                                      <div className="flex items-center gap-2 text-orange-600 font-bold text-sm mb-1">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                                        AI Butuh Bantuan Menjawab
-                                      </div>
-                                      <p className="text-orange-700 text-xs mb-3">AI telah mematikan dirinya secara otomatis. Silakan ambil alih percakapan ini.</p>
-                                      
-                                      <button 
-                                        onClick={() => { setInputText('Halo Kak! Dengan Admin Jalé Florist di sini. Ada yang bisa dibantu?'); }} 
-                                        className="w-full bg-white border border-orange-200 text-orange-600 text-xs font-bold py-2 rounded shadow-sm hover:bg-orange-100 transition-colors"
-                                      >
-                                        Balas Manual (Ambil Alih)
-                                      </button>
-                                    </div>
-                                  );
-                                }
 
                                 return (
                                   <>
                                     {displayMsg || (isAdmin ? '' : '📸 [Gambar]')}
-                                    {catalogHtml}
-                                    {escalationHtml}
                                   </>
                                 );
                               })()}
@@ -650,40 +647,84 @@ export default function Dashboard() {
             {/* Area Input Chat Bawah */}
             <div className="bg-[#F0F2F5] px-4 py-3 border-t border-gray-200 flex flex-col shrink-0 relative">
               
-              {/* Quick Actions Admin (Muncul saat AI Nonaktif / Handoff) */}
-              {!selectedContact.is_ai_active && !hasValidated && (
-                <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-1">
-                  <button 
-                    onClick={handleAcceptPaymentAndOrderCourier}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold whitespace-nowrap hover:bg-green-100 transition-colors shadow-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Terima Bukti Transfer (Kirim Resi)
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const msg = "Halo Kak, mohon maaf bukti transfer yang dikirimkan terpotong atau kurang jelas. Boleh minta tolong difotokan ulang struknya secara utuh? 🙏";
-                      setHasValidated(true);
-                      handleSendMessage(null, msg);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-full text-xs font-bold whitespace-nowrap hover:bg-red-100 transition-colors shadow-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Tolak Bukti Transfer
-                  </button>
-                </div>
-              )}
+              {/* Eskalasi Alert */}
+              {(() => {
+                if (activeContact?.is_ai_active || hideEscalation || messages.length === 0) return null;
+                const lastMsg = messages[messages.length - 1].message_text;
+                if (!lastMsg?.startsWith('[ESCALATION]')) return null;
+
+                let alasan = 'AI mematikan dirinya otomatis karena pesanan ini mendesak/urgent atau terjadi error.';
+                let draft = 'Halo Kak! Dengan Admin Jalé Florist di sini. Ada yang bisa dibantu?';
+                
+                const cleanMsg = lastMsg.replace('[ESCALATION]', '').trim();
+                
+                const alasanMatch = cleanMsg.match(/Alasan:\s*(.*?)(?=\s*\|\s*Draft:|$)/is);
+                const draftMatch = cleanMsg.match(/Draft:\s*(.*)/is);
+                
+                if (alasanMatch && draftMatch) {
+                    alasan = alasanMatch[1].replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim();
+                    draft = draftMatch[1].replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim();
+                } else if (cleanMsg) {
+                    draft = cleanMsg.replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim() || draft;
+                }
+
+                const isPayment = alasan.toLowerCase().includes('bukti transfer') || alasan.toLowerCase().includes('pembayaran');
+
+                return (
+                  <div className="mb-3 border border-orange-200 bg-orange-50 rounded-lg p-3 shadow-sm">
+                    <div className="flex items-center gap-2 text-orange-600 font-bold text-sm mb-1">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                      AI Butuh Bantuan Menjawab
+                    </div>
+                    <p className="text-orange-700 text-xs mb-3">{alasan}</p>
+                    
+                    <div className="flex flex-col gap-2">
+                      {isPayment && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setHideEscalation(true);
+                              handleAcceptPaymentAndOrderCourier();
+                            }}
+                            className="flex-1 bg-[#00BFA5] text-white text-xs font-bold py-2 rounded shadow-sm hover:bg-[#00897B] transition-colors"
+                          >
+                            ✅ Terima & Panggil Kurir
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setHideEscalation(true);
+                              handleSendMessage(new Event('submit'), "Mohon maaf Kak, foto bukti transfernya tidak terbaca/belum masuk. Bisa tolong dicek kembali? 🙏");
+                            }}
+                            className="flex-1 bg-white border border-red-200 text-red-500 text-xs font-bold py-2 rounded shadow-sm hover:bg-red-50 transition-colors"
+                          >
+                            ❌ Tolak
+                          </button>
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => {
+                          setHideEscalation(true);
+                          setInputText(draft);
+                        }}
+                        className="w-full bg-orange-600 border border-orange-600 text-white text-[12px] font-bold py-1.5 rounded shadow-sm hover:bg-orange-700 transition-colors"
+                      >
+                        Jawab Manual {isPayment ? '(Edit Draft)' : ''}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Notif AI Draft */}
-              {selectedContact.is_ai_active && (
+              {activeContact?.is_ai_active === 1 && (
                 <div className="flex items-center gap-3 mb-3 bg-white p-2.5 rounded-xl shadow-sm border border-gray-100">
                   <div className="w-10 h-10 bg-[#00BFA5] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-[14px] text-gray-800">Jale Florist customer care agent</span>
-                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">AI Draft</span>
+                      <span className="font-bold text-[14px] text-gray-800">Jale Florist Admin AI</span>
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">Aktif</span>
                     </div>
                     <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                       <svg className="w-3 h-3 text-[#00BFA5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>

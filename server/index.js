@@ -5,6 +5,7 @@ import { connectToWhatsApp, sock } from './wa.js';
 import { askQwenAI } from './ai.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 // Auto-migrate schema
 try {
@@ -77,8 +78,11 @@ app.post('/api/scenarios/:id/load', async (req, res) => {
         const scenario = scenarios.find(s => s.id === id);
         if (!scenario) return res.status(404).json({ success: false, message: "Skenario tidak ditemukan" });
         
+        const lastMsg = scenario.messages[scenario.messages.length - 1];
+        const isEscalation = lastMsg && lastMsg.message_text.startsWith('[ESCALATION]');
+        
         await db.query("DELETE FROM messages WHERE no_wa = '0895339549364_SANDBOX'");
-        await db.query("UPDATE contacts SET is_ai_active = 1 WHERE no_wa = '0895339549364_SANDBOX'");
+        await db.query("UPDATE contacts SET is_ai_active = ? WHERE no_wa = '0895339549364_SANDBOX'", [isEscalation ? 0 : 1]);
         
         for (const msg of scenario.messages) {
             await db.query("INSERT INTO messages (no_wa, sender, message_text, created_at) VALUES ('0895339549364_SANDBOX', ?, ?, NOW())", [msg.sender, msg.message_text]);
@@ -128,9 +132,8 @@ app.post('/api/test-ai', async (req, res) => {
             aiReply = aiReply.replace('[SEND_QRIS]', '').trim();
         }
 
-        const isHandoff = aiReply.includes('[HANDOFF]');
-        if (isHandoff) {
-            aiReply = aiReply.replace('[HANDOFF]', '').trim();
+        const isSilentHandoff = aiReply.includes('[SILENT_HANDOFF]') || aiReply.includes('[HANDOFF]');
+        if (isSilentHandoff) {
             // Matikan AI otomatis karena butuh bantuan manusia!
             await db.query('UPDATE contacts SET is_ai_active = 0 WHERE no_wa = ?', [sender]);
         }
@@ -140,23 +143,27 @@ app.post('/api/test-ai', async (req, res) => {
         if (shouldSendQris) {
             textToSave += '\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg';
         }
-        if (isHandoff) {
-            textToSave += '\n[ESCALATION]';
+        if (isSilentHandoff) {
+            textToSave = '[ESCALATION]' + aiReply; // Simpan log eskalasi beserta alasan dan draft
         }
         
-        // HANYA tampilkan visual katalog jika AI benar-benar menyebutkan nama/sku produk tersebut di balasannya
-        if (products && products.length > 0) {
-            const aiMentionedProducts = products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
-            if (aiMentionedProducts.length > 0) {
-                textToSave += '\n[KATALOG]' + JSON.stringify(aiMentionedProducts.slice(0, 3));
-            }
-        }
-
-        // Simpan balasan AI ke MySQL agar diingat pada chat berikutnya!
+        // Simpan balasan teks utama AI ke MySQL
         await db.query(`
             INSERT INTO messages (no_wa, sender, message_text) 
             VALUES (?, 'ai', ?)
         `, [sender, textToSave]);
+
+        // Simpan gambar rekomendasi 1 per 1 ke MySQL agar dirender seperti WhatsApp asli
+        const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima');
+        if (!shouldSendQris && !isSilentHandoff && !isFormOrder && products && products.length > 0) {
+            const aiMentionedProducts = products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
+            for (const p of aiMentionedProducts.slice(0, 3)) {
+                if (p.image_url) {
+                    const caption = `🌸 *${p.name}*\n💰 Harga: Rp ${p.price.toLocaleString('id-ID')}`;
+                    await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'ai', ?)`, [sender, `${caption}\n[IMAGE]${p.image_url}`]);
+                }
+            }
+        }
 
         const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
 
@@ -220,6 +227,73 @@ app.post('/api/admin/toggle-ai', async (req, res) => {
         const { no_wa, is_ai_active } = req.body;
         await db.query('UPDATE contacts SET is_ai_active = ? WHERE no_wa = ?', [is_ai_active, no_wa]);
         res.json({ success: true, message: `AI berhasil ${is_ai_active ? 'diaktifkan' : 'dimatikan'}` });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Paksa AI membalas pesan terakhir
+app.post('/api/admin/force-ai-reply', async (req, res) => {
+    try {
+        const { no_wa } = req.body;
+        
+        // Aktifkan AI di DB
+        await db.query('UPDATE contacts SET is_ai_active = 1 WHERE no_wa = ?', [no_wa]);
+
+        // Dapatkan pesan customer terakhir dari DB untuk pemicu, jika tidak ada kirim pesan kosong
+        const [rows] = await db.query('SELECT message_text FROM messages WHERE no_wa = ? AND sender = "customer" ORDER BY id DESC LIMIT 1', [no_wa]);
+        const lastMessage = rows.length > 0 ? rows[0].message_text : "Halo";
+
+        // Panggil Qwen AI (langsung baca dari DB)
+        const aiResult = await askQwenAI(no_wa, lastMessage);
+        
+        let aiReply = typeof aiResult === 'string' ? aiResult : aiResult.reply;
+        aiReply = aiReply.replace(/\*\*/g, '*');
+        
+        const shouldSendQris = aiReply.includes('[SEND_QRIS]');
+        if (shouldSendQris) aiReply = aiReply.replace('[SEND_QRIS]', '').trim();
+
+        if (aiReply.includes('[SILENT_HANDOFF]') || aiReply.includes('[HANDOFF]')) {
+            await db.query('UPDATE contacts SET is_ai_active = 0 WHERE no_wa = ?', [no_wa]);
+            await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'admin', ?)`, [no_wa, `[ESCALATION]${aiReply}`]);
+            return res.json({ success: true, message: 'AI tetap butuh bantuan admin, Handoff diaktifkan lagi.' });
+        }
+
+        // Simpan balasan teks utama AI ke DB
+        let textToSave = aiReply;
+        await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'ai', ?)`, [no_wa, textToSave]);
+
+        // Simpan gambar rekomendasi 1 per 1 ke DB
+        const isFormOrderAdmin = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima');
+        if (!shouldSendQris && !isFormOrderAdmin && aiResult.products && aiResult.products.length > 0) {
+            const aiMentionedProducts = aiResult.products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
+            for (const p of aiMentionedProducts.slice(0, 3)) {
+                if (p.image_url) {
+                    const caption = `🌸 *${p.name}*\n💰 Harga: Rp ${p.price.toLocaleString('id-ID')}`;
+                    await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'ai', ?)`, [no_wa, `${caption}\n[IMAGE]${p.image_url}`]);
+                }
+            }
+        }
+
+        // Kirim via WA (jika bukan sandbox)
+        if (!no_wa.includes('SANDBOX') && typeof sock !== 'undefined') {
+            await sock.sendMessage(no_wa, { text: aiReply });
+            if (shouldSendQris) {
+                try {
+                    const qrisPath = './public/images/qris/QRIS-Jale-Florist.jpg';
+                    if (fs.existsSync(qrisPath)) {
+                        const buffer = fs.readFileSync(qrisPath);
+                        const caption = '💳 *QRIS Pembayaran Jalé Florist*\nSilakan scan untuk DP 50% atau Lunas 🙏✨';
+                        await sock.sendMessage(no_wa, { image: buffer, caption: caption });
+                        await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'ai', ?)`, [no_wa, `${caption}\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg`]);
+                    }
+                } catch (e) {
+                    console.log('⚠️ Gagal mengirim QRIS:', e.message);
+                }
+            }
+        }
+        
+        res.json({ success: true, message: 'AI berhasil merespons pesan.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -373,11 +447,11 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 }
                 
                 // 2. Fallback: Coba tangkap dari ketikan manual pelanggan (Nama penerima:)
-                if (text.includes('Nama penerima')) {
-                    const nameMatch = text.match(/Nama penerima\s*:\s*([^\n]+)/i);
-                    const addrMatch = text.match(/Alamat.*?:\s*([^\n]+)/i);
+                if (text.includes('Nama penerima') || text.includes('Nama')) {
+                    const nameMatch = text.match(/Nama(?: penerima|)\s*:\s*([^\n]+)/i);
+                    const addrMatch = text.match(/Alamat(?: Pengiriman|).*?:\s*([^\n]+)/i);
                     const itemMatch = text.match(/Jenis order\s*:\s*([^\n]+)/i);
-                    const timeMatch = text.match(/(?:Hari dan |)Waktu pengantaran\s*:\s*([^\n]+)/i);
+                    const timeMatch = text.match(/Waktu pengantaran(?:.*?):\s*([^\n]+)/i);
                     
                     if (nameMatch && nameMatch[1]) destName = nameMatch[1].trim();
                     if (addrMatch && addrMatch[1]) destAddress = addrMatch[1].trim();
@@ -392,8 +466,8 @@ app.post('/api/admin/order-courier', async (req, res) => {
         const payload = {
             origin_contact_name: "Jalé Florist",
             origin_contact_phone: "0895339549364",
-            origin_address: "Jl. Cibogo Atas No. 99, Sukawarna, Sukajadi, Bandung",
-            origin_coordinate: { latitude: -6.892, longitude: 107.575 },
+            origin_address: "Jl. Cicalengka Raya No.8, Antapani Kidul, Kota Bandung",
+            origin_coordinate: { latitude: -6.9182, longitude: 107.6533 },
             destination_contact_name: destName,
             destination_contact_phone: no_wa || "081233334444",
             destination_address: destAddress,
@@ -460,8 +534,9 @@ app.post('/api/admin/order-courier', async (req, res) => {
         }
 
         const resi = data.courier && data.courier.waybill_id ? data.courier.waybill_id : (data.id || 'GOJ-TEST-123');
-        // Gunakan field link dari API jika ada, atau buat URL tracking resmi Biteship menggunakan Order ID
-        let trackingUrl = data.courier && data.courier.link ? data.courier.link : `https://track.biteship.com/${data.id}`;
+        // Gunakan field link dari API jika ada, atau buat URL tracking resmi Biteship menggunakan Tracking ID
+        const trackingId = data.courier && data.courier.tracking_id ? data.courier.tracking_id : data.id;
+        let trackingUrl = data.courier && data.courier.link ? data.courier.link : `https://track.biteship.com/${trackingId}`;
         
         // Tambahkan ?environment=development karena ini API Sandbox
         if (!trackingUrl.includes('environment=')) {
@@ -477,7 +552,27 @@ app.post('/api/admin/order-courier', async (req, res) => {
         const finalDestAddress = data.destination ? data.destination.address : payloadOrder.destination_address;
         const courierName = data.courier ? (data.courier.company + ' ' + data.courier.type).toUpperCase() : 'GOJEK INSTANT';
         
-        const msgText = `Halo Kak! Pesanan Kakak sudah ${parsedDeliveryType === 'later' ? 'dijadwalkan untuk pengiriman' : 'diserahkan ke kurir'} ya 🚚💨
+        let msgText = '';
+        if (parsedDeliveryType === 'later') {
+            msgText = `Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨
+
+*DETAIL PENGIRIMAN*
+📦 Ekspedisi: ${courierName}
+📅 Waktu Pick-up: ${dateStr}
+
+*TUJUAN PENGIRIMAN*
+👤 Penerima: ${finalDestName}
+📞 No. HP: ${payloadOrder.destination_contact_phone}
+📍 Alamat: ${finalDestAddress}
+
+Lacak status pesanan Kakak di sini:
+👉 ${trackingUrl}
+
+*(Catatan: Karena ini pesanan terjadwal, halaman pelacakan mungkin baru akan aktif atau memunculkan nama kurir pada hari H pengiriman ya, Kak!)*
+
+Terima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸`;
+        } else {
+            msgText = `Halo Kak! Pesanan Kakak sudah diserahkan ke kurir ya 🚚💨
 
 *DETAIL PENGIRIMAN*
 📦 Ekspedisi: ${courierName}
@@ -493,6 +588,7 @@ Lacak pengiriman Kakak secara *real-time* di sini:
 👉 ${trackingUrl}
 
 Terima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸`;
+        }
 
         // Simpan pesan balasan dari admin ke DB
         const [result] = await db.query(
@@ -509,10 +605,96 @@ Terima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 
                 console.error("Gagal kirim resi WA:", err.message);
             }
         }
+        // Simpan mapping Order ID ke WhatsApp untuk keperluan Webhook
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const mapPath = path.join(__dirname, '../orders_map.json');
+            let ordersMap = {};
+            if (fs.existsSync(mapPath)) {
+                ordersMap = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+            }
+            ordersMap[data.id] = { no_wa: no_wa, courierName: courierName };
+            fs.writeFileSync(mapPath, JSON.stringify(ordersMap, null, 2));
+        } catch (err) {
+            console.error("Gagal menyimpan mapping order:", err.message);
+        }
 
         res.json({ success: true, resi: resi, trackingUrl: trackingUrl, order_id: data.id });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Webhook untuk menerima update status dari Biteship (Misal: Kurir Allocated)
+app.post('/api/webhook/biteship', async (req, res) => {
+    try {
+        const payload = req.body;
+        console.log("📥 Menerima Webhook dari Biteship:", payload.event, "| Status:", payload.status);
+
+        // Biteship akan mengirim status 'allocated' atau 'picking_up' ketika kurir didapatkan
+        if (payload.event === 'order.status' && (payload.status === 'allocated' || payload.status === 'picking_up')) {
+            const orderId = payload.order_id;
+            
+            const fs = require('fs');
+            const path = require('path');
+            const mapPath = path.join(__dirname, '../orders_map.json');
+            
+            if (fs.existsSync(mapPath)) {
+                const ordersMap = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+                const orderData = ordersMap[orderId];
+                
+                // Cek apakah sudah pernah dinotifikasi agar tidak double chat
+                if (orderData && !orderData.notified_allocated) {
+                    const no_wa = orderData.no_wa;
+                    
+                    const trackingId = payload.courier && payload.courier.tracking_id ? payload.courier.tracking_id : payload.order_id;
+                    let trackingUrl = payload.courier && payload.courier.link ? payload.courier.link : `https://track.biteship.com/${trackingId}`;
+                    
+                    if (!trackingUrl.includes('environment=')) {
+                        trackingUrl += '?environment=development';
+                    }
+
+                    const resi = payload.courier && payload.courier.waybill_id ? payload.courier.waybill_id : (trackingId || '-');
+
+                    const msgText = `Halo Kak! Kabar gembira, kurir untuk pesanan Kakak sudah dialokasikan dan sedang bersiap menuju lokasi penjemputan! 🚚💨
+
+*UPDATE PENGIRIMAN*
+🧾 No Resi: ${resi}
+
+Lacak posisi kurir secara *real-time* di sini:
+👉 ${trackingUrl}
+
+Terima kasih sudah sabar menunggu ya Kak 🌸`;
+
+                    // Simpan pesan notifikasi ini ke DB agar tampil di Dashboard Jale Florist
+                    await db.query(
+                        'INSERT INTO messages (no_wa, sender, message_text, reply_to_id) VALUES (?, "admin", ?, NULL)', 
+                        [no_wa, msgText]
+                    );
+
+                    // Kirim ke WhatsApp pelanggan jika bukan sandbox
+                    if (!no_wa.includes('SANDBOX') && typeof sock !== 'undefined') {
+                        try {
+                            await sock.sendMessage(no_wa, { text: msgText });
+                            console.log(`📤 Webhook Resi terkirim ke WA [${no_wa}]`);
+                        } catch (err) {
+                            console.error("Gagal kirim Webhook Resi WA:", err.message);
+                        }
+                    }
+                    
+                    // Tandai agar tidak dikirim ganda
+                    ordersMap[orderId].notified_allocated = true;
+                    fs.writeFileSync(mapPath, JSON.stringify(ordersMap, null, 2));
+                }
+            }
+        }
+
+        // Biteship membutuhkan respons 200 OK
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error("Error memproses Webhook Biteship:", error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -542,64 +724,134 @@ app.get('/sandbox', (req, res) => {
     <head>
         <meta charset="UTF-8"><title>🧪 Sandbox AI - Jalé Florist</title>
         <style>
-            body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; background: #FAF7F3; padding: 20px; }
-            .chat-box { background: white; border: 2px solid #DCC5B2; border-radius: 10px; height: 400px; overflow-y: auto; padding: 15px; margin-bottom: 15px; }
-            .msg { margin: 10px 0; padding: 10px 15px; border-radius: 15px; max-width: 80%; }
-            .user { background: #D9A299; color: white; margin-left: auto; text-align: right; }
-            .ai { background: #F0E4D3; color: #333; margin-right: auto; white-space: pre-wrap; }
-            .admin { background: #ffebd2; color: #d35400; margin-right: auto; white-space: pre-wrap; border-left: 4px solid #d35400; }
-            .meta { font-size: 11px; color: #666; margin-top: 5px; }
-            .input-box { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px; }
-            textarea { flex: 1; padding: 12px; border: 2px solid #DCC5B2; border-radius: 8px; font-size: 15px; font-family: inherit; resize: none; }
-            button { background: #D9A299; color: white; border: none; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; height: 45px; }
-            button:hover { background: #c88a80; }
-            .tools-box { display: flex; gap: 10px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; align-items: center; }
-            select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex: 1; }
+            * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+            body { margin: 0; background: #e5ddd5; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+            
+            .app-container { width: 100%; max-width: 1000px; display: flex; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden; height: 95vh; border-radius: 20px; }
+            
+            .left-panel { width: 320px; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #d1d7db; }
+            .left-header { background: #00a884; color: white; padding: 25px 20px; text-align: center; font-weight: 600; font-size: 20px; display: flex; flex-direction: column; gap: 5px; }
+            .left-header span { font-size: 13px; font-weight: 400; opacity: 0.9; }
+            
+            .tools-bar { padding: 25px 20px; display: flex; flex-direction: column; gap: 15px; height: 100%; }
+            .tools-bar select { padding: 12px; border: 1px solid #d1d7db; border-radius: 8px; outline: none; font-size: 14px; background: white; cursor: pointer; color: #333; font-weight: 500; }
+            .btn-tool { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: white; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            .btn-tool:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+            .btn-tool:active { transform: translateY(1px); }
+            .btn-save { background: #25D366; color: #111b21; }
+            .btn-load { background: #008069; }
+            .btn-reset { background: #ef4444; margin-top: auto; }
+
+            .right-panel { flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; }
+            .right-header { background: #f0f2f5; padding: 12px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #d1d7db; }
+            .avatar { width: 42px; height: 42px; background: #00a884; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; }
+            .contact-info { display: flex; flex-direction: column; }
+            .contact-name { font-weight: 600; font-size: 16px; color: #111b21; }
+            .contact-status { font-size: 13px; color: #667781; }
+
+            .chat-container { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 12px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; }
+            
+            .msg-wrapper { display: flex; width: 100%; margin-bottom: 5px; }
+            .msg { padding: 8px 12px; border-radius: 8px; max-width: 70%; font-size: 14.5px; line-height: 20px; position: relative; box-shadow: 0 1px 1px rgba(11,20,26,0.1); word-wrap: break-word; color: #111b21; }
+            
+            /* Chat bubbles WhatsApp Style */
+            .msg.user { background: #d9fdd3; margin-left: auto; border-top-right-radius: 0; }
+            .msg.user::before { content: ""; position: absolute; top: 0; right: -8px; width: 0; height: 0; border-top: 0px solid transparent; border-left: 8px solid #d9fdd3; border-bottom: 10px solid transparent; }
+            
+            .msg.ai { background: #ffffff; margin-right: auto; border-top-left-radius: 0; }
+            .msg.ai::before { content: ""; position: absolute; top: 0; left: -8px; width: 0; height: 0; border-top: 0px solid transparent; border-right: 8px solid #ffffff; border-bottom: 10px solid transparent; }
+            
+            .msg.admin { background: #fff3cd; margin-right: auto; border-top-left-radius: 0; border-left: 4px solid #f39c12; }
+            .msg.admin::before { content: ""; position: absolute; top: 0; left: -8px; width: 0; height: 0; border-top: 0px solid transparent; border-right: 8px solid #f39c12; border-bottom: 10px solid transparent; }
+            
+            .msg-sender { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #00a884; }
+            .msg.admin .msg-sender { color: #d35400; }
+            
+            .input-area { background: #f0f2f5; padding: 12px 20px; display: flex; gap: 12px; align-items: center; border-top: 1px solid #d1d7db; }
+            .input-area textarea { flex: 1; padding: 12px 18px; border: none; border-radius: 24px; resize: none; outline: none; font-size: 15px; max-height: 100px; background: #ffffff; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
+            .input-area textarea::placeholder { color: #8696a0; }
+            .btn-action { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; transition: all 0.2s; color: #54656f; }
+            .btn-action:hover { background: #e5e7eb; color: #00a884; }
+            .btn-send { background: #00a884; color: white; width: 40px; height: 40px; padding: 10px; }
+            .btn-send:hover { background: #008069; color: white; transform: scale(1.05); }
+            .btn-send svg { width: 20px; height: 20px; fill: currentColor; }
         </style>
     </head>
     <body>
-        <h2>🧪 Sandbox AI Testing (OmniRoute + MySQL)</h2>
-        <p style="font-size: 13px; color: #666;">Mode pengujian tanpa WhatsApp. Tes sepuasnya untuk melihat respon AI & menyimpan skenario!</p>
-        
-        <div class="tools-box">
-            <button onclick="saveScenario()" style="background: #27ae60; height: 38px; padding: 8px 12px;">💾 Simpan Skenario</button>
-            <select id="scenarioSelect"><option value="">-- Pilih Skenario Tersimpan --</option></select>
-            <button onclick="loadScenario()" style="background: #2980b9; height: 38px; padding: 8px 12px;">📂 Load Skenario</button>
+        <div class="app-container">
+            <!-- LEFT PANEL -->
+            <div class="left-panel">
+                <div class="left-header">
+                    🧪 Sandbox AI 
+                    <span>Jalé Florist Testing Mode</span>
+                </div>
+                <div class="tools-bar">
+                    <select id="scenarioSelect"><option value="">-- Pilih Skenario --</option></select>
+                    <button onclick="loadScenario()" class="btn-tool btn-load">📂 Muat Skenario</button>
+                    <button onclick="saveScenario()" class="btn-tool btn-save">💾 Simpan Skenario Ini</button>
+                    
+                    <button onclick="resetChat()" class="btn-tool btn-reset">🗑️ Reset Obrolan</button>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right-panel">
+                <div class="right-header">
+                    <div class="avatar">J</div>
+                    <div class="contact-info">
+                        <div class="contact-name">Jalé Florist</div>
+                        <div class="contact-status">online (AI Assistant Active)</div>
+                    </div>
+                </div>
+
+                <div class="chat-container" id="chatBox">
+                    <div class="msg-wrapper"><div class="msg ai"><div class="msg-sender">~ AI Assistant</div>🤖 Halo! Saya AI Jalé Florist di dalam mode Sandbox. Mau tes tanya apa hari ini? 🌸</div></div>
+                </div>
+                
+                <div class="input-area">
+                    <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="sendPhoto(event)">
+                    <button onclick="document.getElementById('photoInput').click()" class="btn-action" title="Kirim Foto">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M21.2 7.2H17l-1.5-1.5c-.3-.3-.7-.5-1.1-.5h-4.8c-.4 0-.8.2-1.1.5L7 7.2H2.8c-.4 0-.8.3-.8.8v11.2c0 .4.4.8.8.8h18.4c.4 0 .8-.4.8-.8V8c0-.5-.3-.8-.8-.8zm-9.2 10c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8.5c-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5-1.6-3.5-3.5-3.5z"></path></svg>
+                    </button>
+                    <textarea id="msgInput" rows="1" placeholder="Ketik pesan pelanggan..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMsg();}"></textarea>
+                    <button onclick="sendMsg()" id="btnSend" class="btn-action btn-send">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div class="chat-box" id="chatBox">
-            <div class="msg ai">🤖 Halo! Saya AI Jalé Florist di dalam mode Sandbox. Mau tes tanya apa hari ini? 🌸</div>
-        </div>
-        <div class="input-box">
-            <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="sendPhoto(event)">
-            <textarea id="msgInput" rows="2" placeholder="Ketik pesan di sini... (Shift+Enter untuk baris baru)" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMsg();}"></textarea>
-            <button onclick="document.getElementById('photoInput').click()" style="background: #88c0d0; color: #fff;" title="Kirim Foto Bukti">📸 Foto</button>
-            <button onclick="sendMsg()" id="btnSend">Kirim</button>
-            <button onclick="resetChat()" style="background: #e74c3c;">🗑️ Reset Memori</button>
-        </div>
         <script>
-            // --- Skenario Logic ---
+            let lastMessageCount = 0;
+
             async function fetchScenarios() {
                 const res = await fetch('/api/scenarios');
                 const data = await res.json();
                 const sel = document.getElementById('scenarioSelect');
-                sel.innerHTML = '<option value="">-- Pilih Skenario Tersimpan --</option>';
+                sel.innerHTML = '<option value="">-- Pilih Skenario Tersimpan --</option><option value="NEW">✨ -- Mulai Skenario Baru (Kosong) --</option>';
                 if(data.scenarios) {
                     data.scenarios.forEach(s => {
                         sel.innerHTML += '<option value="'+s.id+'">'+s.name+'</option>';
                     });
                 }
             }
+            
             async function saveScenario() {
                 const name = prompt("Masukkan nama skenario ini:");
                 if(!name) return;
-                await fetch('/api/scenarios', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name}) });
-                alert('Skenario berhasil disimpan!');
+                const reqRes = await fetch('/api/scenarios', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name}) });
+                const reqData = await reqRes.json();
+                if (!reqData.success) { alert('Gagal menyimpan: ' + reqData.message); return; }
+                alert('Skenario berhasil disimpan! Memori akan direset untuk skenario baru.');
                 fetchScenarios();
+                await fetch('/api/reset-chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({}) });
+                fetchHistory();
             }
+            
             async function loadScenario() {
                 const id = document.getElementById('scenarioSelect').value;
                 if(!id) return alert('Pilih skenario dulu!');
+                if(id === 'NEW') { resetChat(); return; }
                 if(!confirm('Load skenario ini? Obrolan saat ini akan tertimpa.')) return;
                 const res = await fetch('/api/scenarios/'+id+'/load', { method: 'POST' });
                 const data = await res.json();
@@ -608,89 +860,143 @@ app.get('/sandbox', (req, res) => {
                     alert('Skenario berhasil diload!');
                 }
             }
+
             async function fetchHistory() {
                 const res = await fetch('/api/sandbox-history');
                 const data = await res.json();
-                if (data.success && data.messages.length > 0) renderHistory(data.messages);
+                if (data.success) {
+                    // Update UI jika ada pesan baru
+                    if (data.messages.length !== lastMessageCount) {
+                        renderHistory(data.messages);
+                        lastMessageCount = data.messages.length;
+                    }
+                }
             }
+
             function renderHistory(messages) {
                 const box = document.getElementById('chatBox');
                 box.innerHTML = '';
+                if(messages.length === 0) {
+                    box.innerHTML = '<div class="msg-wrapper"><div class="msg ai"><div class="msg-sender">AI Assistant</div>🤖 Memori percakapan Sandbox telah direset! Mau tes skenario apa sekarang? 🌸</div></div>';
+                    return;
+                }
+
                 messages.forEach(m => {
-                    const cssClass = m.sender === 'customer' ? 'user' : (m.sender === 'admin' ? 'admin' : 'ai');
+                    const isUser = m.sender === 'customer';
+                    const cssClass = isUser ? 'user' : (m.sender === 'admin' ? 'admin' : 'ai');
+                    const senderName = isUser ? '' : (m.sender === 'admin' ? '<div class="msg-sender">~ Human Agent (Admin)</div>' : '<div class="msg-sender">~ AI Assistant</div>');
+                    
                     let displayMsg = m.message_text.replace(/\\n/g, '<br/>');
+                    
                     if(displayMsg.includes('[IMAGE]')) {
                         const parts = displayMsg.split('[IMAGE]');
-                        displayMsg = parts[0] + '<br/><img src="'+parts[1]+'" style="max-width: 160px; border-radius: 6px; display:block; margin-top: 5px;" />';
+                        displayMsg = parts[0] + '<br/><img src="'+parts[1]+'" style="max-width: 200px; border-radius: 8px; display:block; margin-top: 8px;" />';
                     }
                     if(displayMsg.includes('[KATALOG]')) {
-                        const parts = displayMsg.split('[KATALOG]');
-                        displayMsg = parts[0];
+                        displayMsg = displayMsg.split('[KATALOG]')[0];
                     }
-                    if(displayMsg.includes('[ESCALATION]')) displayMsg = displayMsg.replace('[ESCALATION]', '');
-                    box.innerHTML += '<div class="msg ' + cssClass + '">' + displayMsg + '</div>';
+                    if(displayMsg.includes('[ESCALATION]')) {
+                        let cleanMsg = displayMsg.replace('[ESCALATION]', '').trim();
+                        let alasanMatch = cleanMsg.match(/Alasan:\s*(.*?)(?=\s*\|\s*Draft:|$)/is);
+                        let alasan = alasanMatch ? alasanMatch[1].replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim() : cleanMsg.replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim();
+                        displayMsg = '<div style="color:#d35400; font-weight:bold; font-size:12px; margin-bottom:5px;">🚨 AI BERHENTI (ESKALASI)</div><div style="font-size:13px; color:#e67e22;"><b>Alasan:</b> ' + alasan + '</div><div style="font-size:11px; margin-top:5px; color:#7f8c8d;">(Di WhatsApp asli, pesan ini tidak terkirim ke customer)</div>';
+                    }
+
+                    box.innerHTML += '<div class="msg-wrapper"><div class="msg ' + cssClass + '">' + senderName + displayMsg + '</div></div>';
                 });
                 box.scrollTop = box.scrollHeight;
             }
 
-            // --- Chat Logic ---
+            // Polling history untuk menerima chat Admin secara real-time
             fetchScenarios();
             fetchHistory();
+            setInterval(fetchHistory, 2000);
+
+            let isProcessing = false;
 
             async function resetChat() {
                 if (!confirm('Hapus riwayat percakapan Sandbox agar mulai dari awal?')) return;
                 await fetch('/api/reset-chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({}) });
-                document.getElementById('chatBox').innerHTML = '<div class="msg ai">🤖 Memori percakapan Sandbox telah direset! Mau tes skenario apa sekarang? 🌸</div>';
+                fetchHistory();
             }
+            
             async function sendPhoto(e) {
+                if (isProcessing) return;
                 const file = e.target.files[0];
                 if (!file) return;
+                let caption = prompt("Masukkan pesan/keterangan untuk dikirim bersama foto ini (opsional):");
+                if (caption === null) return; // User membatalkan upload
+                caption = caption.trim();
+                
                 const url = URL.createObjectURL(file);
                 const box = document.getElementById('chatBox');
-                box.innerHTML += '<div class="msg user"><img src="' + url + '" style="max-width: 160px; border-radius: 6px; display:block; margin-bottom: 5px;" />[Mengirimkan Foto/Bukti Transfer]</div>';
+                
+                const displayText = caption ? '[Gambar] ' + caption : '[Gambar]';
+                const aiMessage = caption ? '[Mengirimkan Foto] ' + caption : '[Mengirimkan Foto]';
+                
+                box.innerHTML += '<div class="msg-wrapper"><div class="msg user"><img src="' + url + '" style="max-width: 200px; border-radius: 8px; display:block; margin-bottom: 5px;" />' + displayText.split('\\n').join('<br/>') + '</div></div>';
                 box.scrollTop = box.scrollHeight;
-                await processAiRequest('[Mengirimkan Foto/Bukti Transfer]');
+                await processAiRequest(aiMessage);
             }
+            
             async function sendMsg() {
+                if (isProcessing) return;
                 const input = document.getElementById('msgInput');
                 const text = input.value.trim();
                 if(!text) return;
-                document.getElementById('chatBox').innerHTML += '<div class="msg user">' + text.split('\\n').join('<br/>') + '</div>';
+                
+                document.getElementById('chatBox').innerHTML += '<div class="msg-wrapper"><div class="msg user">' + text.split('\\n').join('<br/>') + '</div></div>';
                 input.value = '';
+                document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+                
                 await processAiRequest(text);
             }
+            
             async function processAiRequest(text) {
+                isProcessing = true;
                 const box = document.getElementById('chatBox');
                 const btn = document.getElementById('btnSend');
                 const loadingId = 'load_' + Date.now();
-                box.innerHTML += '<div class="msg ai" id="' + loadingId + '">🤖 Sedang berpikir...</div>';
+                
+                box.innerHTML += '<div class="msg-wrapper" id="' + loadingId + '"><div class="msg ai"><div class="msg-sender">~ AI Assistant</div>🤖 Sedang mengetik...</div></div>';
                 box.scrollTop = box.scrollHeight;
+                btn.disabled = true;
 
                 try {
-                    const res = await fetch('/api/test-ai', {
+                    await fetch('/api/test-ai', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: text })
                     });
-                    const data = await res.json();
-                    setTimeout(() => fetchHistory(), 1000); // Reload history to get proper rendered AI response from DB
+                    setTimeout(fetchHistory, 500);
                 } catch(e) {
-                    document.getElementById(loadingId).innerText = '❌ Gagal: ' + e.message;
+                    document.getElementById(loadingId).innerHTML = '<div class="msg-wrapper"><div class="msg ai">❌ Gagal: ' + e.message + '</div></div>';
                 }
-                btn.innerText = 'Kirim'; btn.disabled = false;
+                btn.disabled = false;
+                isProcessing = false;
             }
+            
             document.getElementById('msgInput').addEventListener('paste', async function(e) {
+                if (isProcessing) return;
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (const item of items) {
                     if (item.type.indexOf('image') === 0) {
                         e.preventDefault();
                         const file = item.getAsFile();
                         if (file) {
+                            let caption = prompt("Masukkan pesan/keterangan untuk dikirim bersama foto ini (opsional):");
+                            if (caption === null) return; // User membatalkan upload
+                            caption = caption.trim();
+                            
                             const url = URL.createObjectURL(file);
                             const box = document.getElementById('chatBox');
-                            box.innerHTML += '<div class="msg user"><img src="' + url + '" style="max-width: 160px; border-radius: 6px; display:block; margin-bottom: 5px;" />[Mengirimkan Foto/Bukti Transfer (via Paste)]</div>';
+                            
+                            const displayText = caption ? '[Gambar] ' + caption : '[Gambar]';
+                            const aiMessage = caption ? '[Mengirimkan Foto] ' + caption : '[Mengirimkan Foto]';
+                            
+                            box.innerHTML += '<div class="msg-wrapper"><div class="msg user"><img src="' + url + '" style="max-width: 200px; border-radius: 8px; display:block; margin-bottom: 5px;" />' + displayText.split('\\n').join('<br/>') + '</div></div>';
                             box.scrollTop = box.scrollHeight;
-                            await processAiRequest('[Mengirimkan Foto/Bukti Transfer]');
+                            await processAiRequest(aiMessage);
                         }
                         break;
                     }

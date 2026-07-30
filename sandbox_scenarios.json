@@ -1,0 +1,704 @@
+[
+  {
+    "id": "1785354088783",
+    "name": "Skenario 1 (Form tidak diisikan)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "Assalamualaikum"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Waalaikumsalam Kak! 🌸 Selamat datang di Jalé Florist, toko bunga cantik di Bandung. Saya Jale, siap bantu Kakak cari bouquet atau hampers bunga untuk orang tersayang. Ada yang bisa saya bantu? 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Halo admin Jalé Florist, saya ingin memesan produk berikut:\n\n*Produk:* Bouquet Artificial Human Size 002\n*Kode:* BAHS_002\n*Harga Dasar:* Rp 650.000\n\n*Total Harga:* Rp 650.000\n\nMohon info ketersediaan dan total biaya ongkirnya ya. Terima kasih!\n\nLink Produk: https://jaleflorist.com/api/preview?id=BAHS_002"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Hai Kak! Terima kasih sudah menghubungi Jalé Florist 😊\n\nProduk Bouquet Artificial Human Size 002 (BAHS_002) tersedia dengan harga **Rp 650.000**, Kak!  \n\nSebelum kita lanjut, boleh Jale tahu untuk **tanggal dan jam berapa** Kakak ingin bouquet ini dikirim atau diambil? Soalnya untuk bouquet artificial minimal **H-1 sebelum pengiriman**, ya 🌸\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "tanggal 2 agustus jam 7 pagi dikirim"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak! 🌸 Produk Bouquet Artificial Human Size 002 (BAHS_002) tersedia dengan harga **Rp 650.000**, Kak.\n\nUntuk pengiriman **tanggal 2 Agustus pukul 07.00**, mohon maaf, jam operasional kami mulai pukul **08.30 - 18.30 WIB**. Apakah Kakak bisa memilih jam pengantaran lain di rentang tersebut? Misalnya pukul 08.30 atau 09.00? Silakan disesuaikan ya, Kak 😊🙏\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "jam 9 aja deh"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, jam **09.00 WIB** tanggal **2 Agustus 2026** bisa kami proses 😊\n\nSebelum lanjut, mohon diisi form pemesanan berikut ya, Kak 🙏\n\n**Attention !!**\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\nSilakan diisi ya Kak 🌷\nNama penerima :\nNo hp penerima :\nJenis order :\nJumlah order :\nAlamat (kode pos) :\nDiantar / Diambil :\nHari dan Waktu pengantaran :\nUcapan :\nNotes / Request :"
+      }
+    ]
+  },
+  {
+    "id": "1785354805506",
+    "name": "Skenario 2 (AI Sibuk)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "jam berapa sekarang min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, sistem AI kami sedang sibuk 🌸"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Halo admin Jalé Florist, saya ingin memesan produk berikut:\n\n*Produk:* Bouquet Artificial Human Size 002\n*Kode:* BAHS_002\n*Harga Dasar:* Rp 650.000\n\n*Total Harga:* Rp 650.000\n\nMohon info ketersediaan dan total biaya ongkirnya ya. Terima kasih!\n\nLink Produk: https://jaleflorist.com/api/preview?id=BAHS_002"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Terima kasih sudah menghubungi Jalé Florist 🌸\n\nProduk BAHS_002 (Bouquet Artificial Human Size 002) dengan harga Rp 650.000 tersedia, Kak! 😊\n\nSebelum lanjut, boleh saya tahu untuk tanggal dan jam berapa pesanan ini ingin dikirim/diterima? Karena untuk bouquet artificial minimal pemesanan H-1 sebelum pengiriman ya 🙏\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "dikirim untuk tanggal 20 agustus jam 4 sore"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak! 😊\n\nTanggal 20 Agustus 2026 jam 4 sore sudah memenuhi syarat H-1 untuk bouquet artificial, jadi aman diproses ✅\n\nSebelum lanjut, silakan lengkapi data pemesanan berikut ya Kak 🙏\n\n**Attention !!**\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\n**Silakan lengkapi data pemesanan berikut ya Kak 🌷**\nNama penerima : \nNo hp penerima : \nJenis order : BAHS_002\nJumlah order : 1\nMetode Pengiriman (Diantar Kurir / Diambil Sendiri) : \nAlamat Pengiriman (beserta patokan) : \nHari dan Waktu pengantaran : Kamis, 20 Agustus 2026 jam 16.00 WIB\nIsi Ucapan (Untuk di Kartu) : \nNotes / Request tambahan : \n\nSilakan diisi ya Kak, nanti saya bantu hitung total biaya ongkirnya 😊\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Nama penerima : Refa\nNo hp penerima : 08123251531\nJenis order : BAHS_002\nJumlah order : 1\nMetode Pengiriman (Diantar Kurir / Diambil Sendiri) : diantar\nAlamat Pengiriman (beserta patokan) : Jl. H. Topek 1 No.14 Bandung\nHari dan Waktu pengantaran : Kamis, 20 Agustus 2026 jam 16.00 WIB\nIsi Ucapan (Untuk di Kartu) : - \nNotes / Request tambahan : -"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, sistem AI kami sedang sibuk 🌸"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Nama penerima : Refa\nNo hp penerima : 08123251531\nJenis order : BAHS_002\nJumlah order : 1\nMetode Pengiriman (Diantar Kurir / Diambil Sendiri) : diantar\nAlamat Pengiriman (beserta patokan) : Jl. H. Topek 1 No.14 Bandung\nHari dan Waktu pengantaran : Kamis, 20 Agustus 2026 jam 16.00 WIB\nIsi Ucapan (Untuk di Kartu) : -\nNotes / Request tambahan : -"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, sistem AI kami sedang sibuk 🌸"
+      }
+    ]
+  },
+  {
+    "id": "1785356335100",
+    "name": "Skenario 3 (Dikirim hari ini)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "jam berapa sekarang min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Sekarang sudah pukul **03.15 WIB**, Kak. Masih larut malam nih, ada yang bisa Jale bantu pesan bunganya? 🌸😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Halo admin Jalé Florist, saya ingin memesan produk berikut:\n\n*Produk:* Bouquet Artificial Human Size 002\n*Kode:* BAHS_002\n*Harga Dasar:* Rp 650.000\n\n*Total Harga:* Rp 650.000\n\nMohon info ketersediaan dan total biaya ongkirnya ya. Terima kasih!\n\nLink Produk: https://jaleflorist.com/api/preview?id=BAHS_002"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌸 Terima kasih sudah tertarik dengan **Bouquet Artificial Human Size 002 (BAHS_002)** — produk ini tersedia dan siap dipesan! 😊\n\nSebelum kita hitung total biaya ongkirnya, Jale mau tanya dulu nih **Kakak mau pesanan ini dikirim atau diambil tanggal dan jam berapa?** Biar kita cek jadwalnya sesuai aturan toko ya 🙏✨\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "dikirim hari ini jam 4 sore"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, untuk produk **Bouquet Artificial Human Size 002 (BAHS_002)** ada aturan pemesanan minimal **H-1** sebelum pengiriman 🙏\n\nKarena Kakak ingin dikirim hari ini (RABU, 30 Juli), sayangnya belum bisa dipenuhi untuk pengiriman. Tapi ada dua opsi yang bisa Kakak pilih:\n\n1. **Diambil sendiri ke toko** hari ini (Jam operasional 08.30–18.30) — alamat: Jl. H. Topek 1 No.14, Bandung.\n2. **Dikirim besok (Jumat, 31 Juli)** dengan estimasi ongkir sesuai area.\n\nKakak lebih suka yang mana? 😊🌸\n[KATALOG][{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"}]"
+      }
+    ]
+  },
+  {
+    "id": "1785357359991",
+    "name": "Skenario 4 (pengiriman hari ini)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan untuk dikirim hari ini"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Selamat pagi Kak! 😊 Terima kasih sudah menghubungi Jalé Florist. Kakak mau pesan produk apa ya? Dan untuk pengiriman hari ini kira-kira jam berapa? 🌸"
+      },
+      {
+        "sender": "customer",
+        "message_text": "jam 12 siang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Selamat pagi Kak! Terima kasih sudah menghubungi kami 🌸\n\nSayangnya, untuk pengiriman hari ini kami tidak bisa memproses pesanan karena seluruh produk bouquet artificial minimal harus dipesan H-1 (sehari sebelumnya). Hari ini (Kamis, 30 Juli) sudah masuk H-0, jadi belum bisa kami kirimkan.\n\nKakak bisa memesan untuk besok, Jumat 31 Juli 2026, atau hari lainnya. Apakah Kakak tertarik? 😊 Jika ada kebutuhan mendesak, Kakak juga bisa langsung menghubungi admin kami di WA 081367931303. 🌷"
+      }
+    ]
+  },
+  {
+    "id": "1785358380908",
+    "name": "Skenario 5 (Urgent memaksa)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan untuk dikirim hari ini"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🙏🌸  \nTerima kasih sudah menghubungi Jalé Florist!  \n\nMohon maaf Kak, untuk pengiriman di **hari ini (Kamis, 30 Juli)** sayangnya belum bisa kami proses. Sesuai ketentuan toko, untuk bouquet Artificial minimal harus pesan **H-1** dan untuk Fresh minimal **H-3** sebelum dikirim ya Kak 🗓️✨.  \n\nSaat ini jam operasional kami juga belum buka (buka pukul 08.30 - 18.30 WIB).  \n\nApakah Kakak mau kami atur pengantaran di hari lain? Misalnya besok **Jumat (31 Juli)** untuk pilihan Artificial, atau akhir pekan ini untuk Fresh? 😊  \n\nAtau boleh tahu dulu Kakak mau cari bouquet model yang seperti apa? Boleh share referensi atau fotonya ke sini biar saya bantu cek stok dan harganya! 🌷💐"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau dikirim untuk hari ini"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Mohon maaf Kak, untuk pengiriman hari ini (Kamis, 30 Juli) kami tidak bisa memproses karena aturan toko mewajibkan pemesanan **minimal H-1 untuk bouquet Artificial** dan **H-3 untuk bouquet Fresh** 🌸🙏.\n\nSaat ini masih pukul 03.46 WIB dan toko baru buka pukul 08.30, jadi jika Kakak ingin hari ini juga, sayangnya tidak memenuhi ketentuan tersebut.\n\nKami bisa bantu atur pengantaran untuk **besok Jumat (31 Juli)** atau hari lainnya sesuai keinginan Kakak 😊. Kakak mau cari bouquet model apa? Boleh share referensi atau fotonya? Nanti saya bantu cek ketersediaan dan harganya ya! 🌷✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "butuh dikirim hari ini urgent"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Kak, mohon maaf sekali 🙏🌸.  \nUntuk pengiriman **hari ini (Kamis, 30 Juli)** kami tidak bisa memproses karena ketentuan pemesanan bouquet **minimal H-1 (Artificial) atau H-3 (Fresh)** sebelum dikirim.\n\nKarena Kakak butuh **urgent**, izinkan saya bantu alihkan ke Admin Jalé Florist agar bisa dibantu lebih lanjut ya. Mohon ditunggu sebentar 😊✨\n[ESCALATION]"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Dengan Admin Jalé Florist di sini. Ada yang bisa dibantu?"
+      }
+    ]
+  },
+  {
+    "id": "1785358991060",
+    "name": "Skenario 6 (pesanan urgent)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "halo min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌸 Ada yang bisa saya bantu hari ini? Kami siap membantu Kakak memilih bouquet cantik untuk orang tersayang 😊✨\n\nSilakan cerita kebutuhannya ya, Kak! 🙏"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌷 Saya Jale, Admin Jalé Florist di sini. Ada yang bisa saya bantu? Silakan sampaikan keperluan pemesanan Kakak ya 😊✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau dikirim untuk hari ini bisa?"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, untuk pengiriman hari ini kami tidak bisa langsung proses karena pemesanan normal minimal H-1 sebelumnya 😊\n\nApakah pesanan Kakak bersifat mendesak/urgent? Jika iya, saya bisa koordinasikan dulu dengan Tim Florist untuk cek ketersediaan stok 🙏🌸"
+      },
+      {
+        "sender": "customer",
+        "message_text": "urgent"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION]"
+      }
+    ]
+  },
+  {
+    "id": "1785364879468",
+    "name": "Skenario 7 (Tanya tanya)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌸\n\nTerima kasih sudah menghubungi Jalé Florist! Kakak mau pesan bunga untuk tanggal dan jam berapa, nih? Biar saya bantu cek ketersediaannya 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya belum tau mau pesen yg gimana pengen liat liat dulu ada yang gimana?"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Selamat pagi juga, Kak! Senang banget bisa bantu Kakak lihat-lihat dulu 🌷\n\nKami punya beberapa pilihan bouquet artificial ukuran *Human Size* yang sedang tersedia:\n1️⃣ **BAHS_001** – Rp 1.250.000\n2️⃣ **BAHS_002** – Rp 650.000\n3️⃣ **BAHS_003** – Rp 700.000\n\nKalau Kakak mau lihat foto atau detail lainnya, bisa langsung cek di website kami ya 😊🌸 Atau boleh juga Kakak cerita mau untuk acara apa? Biar saya bantu rekomendasikan!\n[KATALOG][{\"sku\":\"BAHS_001\",\"name\":\"Bouquet Artificial Human Size 001\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":1250000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_001_Harga 1250k.webp\"},{\"sku\":\"BAHS_002\",\"name\":\"Bouquet Artificial Human Size 002\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":650000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_002_Harga 650k.webp\"},{\"sku\":\"BAHS_003\",\"name\":\"Bouquet Artificial Human Size 003\",\"category\":\"Bouquet Artificial\",\"size\":\"Human Size\",\"price\":700000,\"image_url\":\"/images/produk/bouquet-artificial/human-size/Bahs_003_Harga 700k.webp\"}]"
+      }
+    ]
+  },
+  {
+    "id": "1785365192744",
+    "name": "Skenario 8 (Tanya tanya)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "halo min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌸 diperkenalkan saya Jale dari toko bunga \"Jalé Florist\" di Bandung. Ada yang bisa saya bantu hari ini? 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan cuman masih bingung mau pesen yang mana"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Tentu Kak, tidak perlu bingung! Di Jale Florist ada beberapa pilihan: ada **Fresh Bouquet** (bunga segar) yang wangi dan segar, serta **Bouquet Artificial** (bunga awet) yang tahan lama tanpa perawatan 🌸\n\nSebagai gambaran, kami punya Bouquet Fresh Small mulai Rp 65.000, dan Bouquet Artificial Medium yang cantik dengan harga Rp 200.000. Kakak bisa lihat koleksi lengkapnya di website kami: **jaleflorist.com** ✨😊"
+      }
+    ]
+  },
+  {
+    "id": "1785403987294",
+    "name": "Skenario 9 (minta rekomendasi error)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "ada rekomendasi buket harga 200rb an ga"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][SILENT_HANDOFF]"
+      }
+    ]
+  },
+  {
+    "id": "1785414647002",
+    "name": "Skenario 10 (Rekmondasi - Pesan)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "ada rekomendasi buket 200rb an ga"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Ada beberapa rekomendasi bouquet artificial ukuran medium seharga **Rp 200.000** yang bisa Kakak lihat: **BAM_001, BAM_002, dan BAM_017** 🌸\n\nSemuanya tampil cantik dan cocok untuk hadiah. Yuk, langsung cek galeri lengkapnya di website kami ya 😊✨"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 002*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_002_Harga 200k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 017*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_017_Harga 200k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 001*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_001_Harga 200k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau buket medium 001 nya dong 1"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Senang sekali Kak! **BAM_001 (Bouquet Artificial Medium 001)** ready dan bisa dipesan 😊\n\nSebelum lanjut, Kakak mau pesanan ini **diantar** atau **diambil sendiri** ke toko? Kalau bisa, kira-kira **tanggal dan jam berapa** Kakak ingin pesanan diterima? 🌷✨"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 001*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_001_Harga 200k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "diantar aja buat tanggal 1 agustus jam 12 siang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, terima kasih! Tanggal **1 Agustus 2026** jam **12.00 WIB** untuk **BAM_001** — ready dan masuk syarat H-1 untuk bouquet artificial 😊\n\nSebelum saya proses, tolong lengkapi data pemesanan berikut ya Kak 🌷\n\nSilakan salin dan isi:\n\n**Attention !!**\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\n**Silakan lengkapi data pemesanan berikut ya Kak 🌷**\n**Nama penerima :** [Isi]\n**No hp penerima :** [Isi]\n**Jenis order :** BAM_001\n**Jumlah order :** 1\n**Alamat Pengiriman Lengkap dan Kode Pos :** [Isi alamat lengkap]\n**Hari dan Waktu pengantaran/pengambilan :** Sabtu, 1 Agustus 2026, jam 12.00 WIB\n**Isi Ucapan/Notes (Jika ada) :** [Isi jika ada]\n\nKirimkan kembali ke sini ya Kak, nanti saya bantu hitung totalnya 🙏✨"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 001*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_001_Harga 200k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Nama : Muhammad Asix\nNo HP : 08993538811\nJenis Order : BAM_001\nJumlah Order : 1\nAlamat Pengiriman : Jl. H. Topek 1 No.14\nHari dan Waktu pengantaran/pengambilan :** Sabtu, 1 Agustus 2026, jam 12.00 WIB\nIsi ucapan : Selamat ulang tahun sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak, data pemesanannya sudah saya catat dengan baik! 🌸\n\nUntuk alamat pengiriman **Jl. H. Topek 1 No.14**, mohon dilengkapi dengan **nama kota dan kode pos**-nya ya Kak, supaya bisa kami hitung estimasi ongkos kirimnya 🙏✨\n\nSetelah itu langsung saya buatkan total harga dan QRIS pembayarannya 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Jl. H. Topek 1 No.14 Kota Bandung (40242)"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak Asix, terima kasih! Alamatnya sudah lengkap, ongkir untuk area **Bandung** kami estimasikan sekitar **Rp 25.000** 🙏\n\nBerikut rincian total pesanannya:\n\n🌸 **BAM_001** : Rp 200.000  \n🚚 **Estimasi ongkir** : Rp 25.000  \n💰 **Total** : **Rp 225.000**  \n\n**DP minimal 50%** = **Rp 112.500**\n\nSilakan lakukan pembayaran DP melalui QRIS di bawah ini ya Kak, nanti tim kami akan segera memproses pesanannya ✨😊\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Medium 001*\n💰 Harga: Rp 200.000\n[IMAGE]/images/produk/bouquet-artificial/m/Bam_001_Harga 200k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti tf nya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak Asix, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏"
+      }
+    ]
+  },
+  {
+    "id": "1785429171360",
+    "name": "Skenario 11 (Pesan dikirim tgl tidak sesuai)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "halo min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat malam, perkenalkan saya Jale dari Jalé Florist 🌸\n\nAda yang bisa saya bantu hari ini? Kakak mau lihat-lihat koleksi bunga dulu atau ada yang ingin ditanyakan? 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesen bunga ada saran ga yang harganya terjangkau"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Selamat malam, Kak! Terima kasih sudah menghubungi Jalé Florist 🌷\n\nUntuk harga yang ramah di kantong, kami punya **Bouquet Fresh Small (BFS_002)** mulai dari **Rp 65.000** lho, cocok untuk hadiah ringan tapi tetap manis. Ada juga **Bouquet Artificial Small (BAS_001)** seharga **Rp 85.000** yang bisa tahan lama.\n\nKalau mau lihat-lihat lebih banyak koleksi, Jale rekomendasikan kunjungi website kita di **jaleflorist.com** ya 😊. Kakak ada preferensi bunga segar atau bunga artificial? Atau mau langsung pesan salah satunya?"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Fresh Small 002*\n💰 Harga: Rp 65.000\n[IMAGE]/images/produk/bouquet-fresh/s/Bfs_002_Harga 65k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesen yang artificial small 1 deh"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Wah pilihan yang bagus, Kak! **Bouquet Artificial Small 001 (BAS_001)** seharga **Rp 85.000** 🌸\n\nSebelum lanjut, Jale mau tanya dulu ya Kak — untuk tanggal dan jam berapa kira-kira pesanan ini ingin dikirim atau diambil? 😊"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "dikirim untuk tanggal 2 Agustus jam 7"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak, untuk tanggal 2 Agustus sudah aman untuk pesanan artificial 😊\n\nSebelum lanjut, mohon dikonfirmasi dulu ya—apakah jam 7 yang dimaksud jam **07.00 pagi** atau **19.00 malam**? Karena jam operasional toko kami mulai pukul **08.30 - 18.30 WIB**, jadi pengiriman bisa dijadwalkan di rentang jam tersebut 🙏\n\nKalau sudah jelas, Jale akan kirimkan form pemesanannya ya Kak 🌷"
+      },
+      {
+        "sender": "customer",
+        "message_text": "jam 7 pagi"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Maaf Kak, untuk jam **07.00 pagi** toko kami belum buka karena jam operasional dimulai pukul **08.30 - 18.30 WIB** setiap hari 🙏\n\nApakah Kakak bisa menyesuaikan jadwal pengiriman/pengambilan di hari **Minggu, 2 Agustus 2026** mulai pukul **08.30 WIB** atau setelahnya? Atau boleh di hari lain yang lebih pas? 😊\n\nKalau sudah oke dengan waktunya, Jale akan langsung kirimkan form pemesanannya ya Kak 🌷"
+      },
+      {
+        "sender": "customer",
+        "message_text": "jam 9 aja brrti"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, untuk jam **09.00 WIB** di hari **Minggu, 2 Agustus 2026** bisa diatur ya 😊✅\n\nSilakan lengkapi data pemesanan berikut ini ya Kak 🙏\n\n**Attention !!**\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\n**Silakan lengkapi data pemesanan berikut ya Kak 🌷**\nNama penerima : \nNo hp penerima : \nJenis order : BAS_001 (Bouquet Artificial Small 001)\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : (Isi alamat lengkap ya Kak jika diantar)\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026 pukul 09.00 WIB\nIsi Ucapan/Notes (Jika ada) :"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Nama penerima : Reza\nNo hp penerima : 08123123123\nJenis order : BAS_001 (Bouquet Artificial Small 001)\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : Jl. H. Topek 1 No.14 RT 7 RW 4 (40242)\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026 pukul 09.00 WIB\nIsi Ucapan/Notes (Jika ada) : selamat ulang tahun sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak Reza, terima kasih sudah melengkapi data pemesanannya dengan sempurna! 😊\n\nBerikut rincian pesanan Kakak:\n- **Produk:** BAS_001 (Bouquet Artificial Small 001) — Rp 85.000\n- **Jumlah:** 1\n- **Pengiriman:** Minggu, 2 Agustus 2026 pukul 09.00 WIB\n- **Alamat:** Jl. H. Topek 1 No.14 RT 7 RW 4 (40242)\n- **Estimasi ongkir (Bandung Raya):** Rp 25.000 *(dapat menyesuaikan tarif kurir)*\n- **Total sementara:** Rp 110.000\n\nKakak bisa melakukan pembayaran **DP minimal 50% (Rp 55.000)** atau langsung lunas melalui:\n✅ **Transfer Bank Mandiri** 1310040388888 a/n Maria Aprilia Subernawati\n✅ **QRIS Jalé Florist** (silakan scan di bawah)\n\nSetelah transfer, mohon kirimkan bukti pembayarannya ya Kak 🙏🌸\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti transfernya ya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak Reza, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏 Untuk pembuatan bunganya akan kami proses setelah DP terkonfirmasi. Ada lagi yang bisa kami bantu, Kak? 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah diserahkan ke kurir ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n📦 Ekspedisi: GOJEK INSTANT\n🧾 No Resi: WYB-1785429020931\n📅 Waktu Pick-up: Kamis, 30 Juli 2026 pukul 23.30 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Reza\n📞 No. HP: 0895339549364_SANDBOX\n📍 Alamat: Jl. H. Topek 1 No.14 RT 7 RW 4 (40242)\n\nLacak pengiriman Kakak secara *real-time* di sini:\n👉 https://track.biteship.com/611WL9jMIuX8d9eY4QKgY3HJ?environment=development\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
+  },
+  {
+    "id": "1785433256656",
+    "name": "Skenario 12 (Link pesanan tidak ditemukan)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesen bunga ada saran ga yang harganya terjangkau"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat datang di Jale Florist 🌸 Untuk bouquet dengan harga ramah di kantong, kami punya beberapa pilihan yang cantik-cantik loh. Misalnya Bouquet Fresh Small (BFS_002) mulai dari Rp 65.000, atau Bouquet Artificial Small (BAS_001) Rp 85.000 yang bisa tahan lama 💐\n\nKakak bisa lihat koleksi lengkapnya di website kami **jaleflorist.com** ya. Kalau ada yang menarik minat Kakak, bilang saja ke Jale 👋"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Fresh Small 002*\n💰 Harga: Rp 65.000\n[IMAGE]/images/produk/bouquet-fresh/s/Bfs_002_Harga 65k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan yang artificial small 1"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, terima kasih minatnya dengan Bouquet Artificial Small 001 (BAS_001) seharga **Rp 85.000** 🌸\n\nSebelum lanjut, boleh Jale tahu untuk tanggal dan jam berapa pesanan ini ingin dikirim atau diambil? Agar kami bisa atur jadwalnya ya Kak 😊"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Small 001*\n💰 Harga: Rp 85.000\n[IMAGE]/images/produk/bouquet-artificial/s/Bas_001_Harga 85k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "mau dikirim buat tanggal 2 agustus jam 12 siang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak! Untuk **Bouquet Artificial Small 001** (BAS_001), tanggal **2 Agustus 2026** jam **12:00 WIB** sudah masuk jadwal dan memenuhi syarat H-1 ya 😊\n\nSilakan lengkapi data pemesanan berikut ini ya Kak 🌷\n\n**Attention !!**\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\n**Silakan lengkapi data pemesanan berikut ya Kak 🌷**\nNama penerima : [Isi]\nNo hp penerima : [Isi]\nJenis order : Bouquet Artificial Small 001 (BAS_001)\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : [Isi jika diantar kurir. Jika diambil ke toko, tulis \"-\"]\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026, jam 12.00 WIB\nIsi Ucapan/Notes (Jika ada) : [Isi jika ada]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "Nama penerima : Rafa\nNo hp penerima : 087212341234\nJenis order : Bouquet Artificial Small 001 (BAS_001)\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : Jl. Pasundan No.137 Bandung Regol 40254\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026, jam 12.00 WIB\nIsi Ucapan/Notes (Jika ada) : Selamat Sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak Rafa, data pemesanannya sudah lengkap! 🌸\n\nBerikut rincian pesanan:\n- 1 x Bouquet Artificial Small 001 (BAS_001): **Rp 85.000**\n- Estimasi ongkir ke Jl. Pasundan No.137, Bandung Regol: **Rp 25.000**\n- **Total: Rp 110.000**\n\nPembayaran dapat dilakukan via QRIS Jalé Florist ya Kak (DP minimal 50% = Rp 55.000). Silakan scan QRIS berikut untuk melakukan pembayaran 😊🙏\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti transfernya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak Rafa, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Mohon maaf Kak, foto bukti transfernya tidak terbaca/belum masuk. Bisa tolong dicek kembali? 🙏"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] coba di cek lagi"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan ulang bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak Rafa, bukti transfer yang sudah dikirim ulang akan segera kami teruskan ke tim admin untuk diverifikasi. Mohon ditunggu sebentar ya 🙏"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n📦 Ekspedisi: GOJEK INSTANT\n🧾 No Resi: 6a6b8c533d6fbe375810e2bc\n📅 Waktu Pick-up: Minggu, 2 Agustus 2026, jam 12.00 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Rafa\n📞 No. HP: 0895339549364_SANDBOX\n📍 Alamat: Jl. Pasundan No.137 Bandung Regol 40254\n\nLacak pengiriman Kakak secara *real-time* di sini:\n👉 https://track.biteship.com/6a6b8c533d6fbe375810e2bc?environment=development\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
+  },
+  {
+    "id": "1785434012685",
+    "name": "Skenario 13 (Link Pesanan tdk ditemukan)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan 1 BAL_001 dikirim untuk tanggal 2 agustus jam 12 siang, dikirim ke alamatnya Jl. H. Topek 1 No.14 (40242), nama penerima dan nomor penerimanya Yasir 089932212313"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak Yasir! Terima kasih sudah mau pesan di Jalé Florist 🌸\n\nUntuk pemesanan BAL_001 (Bouquet Artificial Large 001) dengan pengiriman hari Minggu, 2 Agustus 2026 jam 12.00 WIB, silakan konfirmasi data berikut ya:\n\nAttention !!\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\nSilakan lengkapi data pemesanan berikut ya Kak 🌷\nNama penerima : Yasir\nNo hp penerima : 089932212313\nJenis order : BAL_001\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : Jl. H. Topek 1 No.14 (40242)\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026, jam 12.00 WIB\nIsi Ucapan/Notes (Jika ada) : \n\nApakah data di atas sudah benar? Jika ada ucapan yang ingin disertakan, silakan ditambahkan ya 😊\n\nJika sudah sesuai, kita lanjut ke pembayaran ✅"
+      },
+      {
+        "sender": "customer",
+        "message_text": "notesnya tidak ada"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, untuk notes tidak ada, langsung kita lanjut ke pembayaran ya 🙏\n\nBerikut rincian pesanannya:\n- **Produk:** BAL_001 (Bouquet Artificial Large 001) × 1\n- **Harga:** Rp 245.000\n- **Estimasi ongkir (Bandung Raya):** Rp 30.000\n- **Total:** Rp 275.000\n\nSilakan lakukan pembayaran ke QRIS Jalé Florist di bawah ini ya Kak 😊🌸\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti tf nya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak Yasir 🙏 Bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya. Mohon ditunggu sebentar, nanti admin akan konfirmasi jika sudah valid ✅🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n📦 Ekspedisi: GOJEK INSTANT\n🧾 No Resi: 6a6b8f5f54d29c5f26ed73ce\n📅 Waktu Pick-up: Minggu, 2 Agustus 2026, jam 12.00 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Yasir\n📞 No. HP: 0895339549364_SANDBOX\n📍 Alamat: Jl. H. Topek 1 No.14 (40242)\n\nLacak pengiriman Kakak secara *real-time* di sini:\n👉 https://track.biteship.com/6a6b8f5f54d29c5f26ed73ce?environment=development\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
+  },
+  {
+    "id": "1785440635212",
+    "name": "Skenario 14 (Pengiriman terjadwal)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan 1 BAL_001 dikirim untuk tanggal 2 agustus jam 12 siang, alamatnya Jl. H. Topek 1 No.14 (40242), nama penerima dan nomor penerimanya Yasir 089932212313 notesnya : Selamat Sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Terima kasih sudah memesan Bouquet Artificial Large 001 (BAL_001) dari kami 😊\n\nPesanan Kakak untuk tanggal 2 Agustus 2026 jam 12 siang bisa kami proses karena sudah memenuhi syarat H-1 untuk bouquet artificial.\n\nSebelum itu, mohon lengkapi data pemesanan berikut ini ya Kak 🌷\n\nAttention !!\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\nSilakan lengkapi data pemesanan berikut ya Kak 🌷\nNama penerima : Yasir\nNo hp penerima : 089932212313\nJenis order : BAL_001\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : Jl. H. Topek 1 No.14 (40242)\nHari dan Waktu pengantaran/pengambilan : Minggu, 2 Agustus 2026 jam 12:00 WIB\nIsi Ucapan/Notes (Jika ada) : Selamat Sayang\n\nSilakan konfirmasi jika data di atas sudah sesuai, Kak! Kalau ada yang perlu ditambahkan atau diubah, bilang aja ya 🙏✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "ya sesuai"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, terima kasih konfirmasinya! Semua data sudah sesuai 😊\n\nBerikut rincian total pembayaran untuk pesanan Kakak:\n\n- **BAL_001** (Bouquet Artificial Large 001) : **Rp 245.000**\n- **Estimasi ongkir** (dalam Kota Bandung) : **Rp 30.000**\n- **Total** : **Rp 275.000**\n\nPembayaran dapat dilakukan via **QRIS Jalé Florist** ya Kak. Silakan scan QRIS di bawah ini untuk DP minimal 50% (Rp 137.500) atau langsung full payment 🙏✨\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti tf nya kak"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n📦 Ekspedisi: GOJEK INSTANT\n📅 Waktu Pick-up: Minggu, 2 Agustus 2026 jam 12:00 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Yasir\n📞 No. HP: 0895339549364_SANDBOX\n📍 Alamat: Jl. H. Topek 1 No.14 (40242)\n\nLacak status pesanan Kakak di sini:\n👉 https://track.biteship.com/6a6ba8d8067c454334869292?environment=development\n\n*(Catatan: Karena ini pesanan terjadwal, halaman pelacakan mungkin baru akan aktif atau memunculkan nama kurir pada hari H pengiriman ya, Kak!)*\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
+  },
+  {
+    "id": "1785441289113",
+    "name": "Skenario 15 (tiba tiba urgent)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "hallo min saya mau pesan"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat datang di Jalé Florist 🌸. Saya Jale, siap bantu pesanan bunga kakak. Sebelum kita lanjut, boleh diinfokan dulu untuk tanggal dan jam berapa kakak ingin pesanannya dikirim atau diambil? 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan 1 BAL_012 dikirim untuk tanggal 4 agustus jam 12 siang, alamatnya Jl. H. Topek 1 No.14 (40242), nama penerima dan nomor penerimanya Refa 089932212313 notesnya : Selamat Sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][SILENT_HANDOFF]"
+      }
+    ]
+  },
+  {
+    "id": "1785442100094",
+    "name": "Skenario 16 (tiba tiba eskalasi)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "hallo min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat pagi 🌸 Perkenalkan, aku Jale dari **Jalé Florist** Bandung. Ada yang bisa saya bantu hari ini? 😊\n\nKebetulan kami punya beberapa koleksi yang sedang hits, misalnya Bouquet Fresh Small (Rp 65.000) atau Bouquet Artificial Medium (Rp 200.000). Kalau Kakak mau lihat-lihat katalog lengkapnya, bisa langsung cek di website kami **jaleflorist.com** ya! ✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "ada rekomendasi bunga harga 300rb an ga"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Tentu Kak, untuk budget Rp 300.000 kami punya beberapa pilihan Bouquet Artificial ukuran XL yang cantik-cantik 🌸\n\nAda **BAXL_016**, **BAXL_014**, dan **BAXL_018**, semuanya harga **Rp 300.000**. Bentuknya elegant dan bisa tahan lama lho! Kakak bisa lihat detail foto masing-masing di website kami **jaleflorist.com** ya ✨😊"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial XL 016*\n💰 Harga: Rp 300.000\n[IMAGE]/images/produk/bouquet-artificial/xl/Baxl_016_Harga 300k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial XL 014*\n💰 Harga: Rp 300.000\n[IMAGE]/images/produk/bouquet-artificial/xl/Baxl_014_Harga 300k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial XL 018*\n💰 Harga: Rp 300.000\n[IMAGE]/images/produk/bouquet-artificial/xl/Baxl_018_Harga 300k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan 1 yang XL 018 dikirim untuk tanggal 4 agustus jam 12 siang, alamatnya Jl. H. Topek 1 No.14 (40242), nama penerima dan nomor penerimanya Refa 089932212313 notesnya : Selamat Sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][SILENT_HANDOFF]"
+      }
+    ]
+  },
+  {
+    "id": "1785443819678",
+    "name": "Skenario 17 (berhasil pesan)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "hallo min"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! 🌸 Selamat pagi! Aku Jale dari Jalé Florist, senang banget bisa bantu Kakak hari ini. Ada yang ingin ditanyakan atau dicari mengenai rangkaian bunganya? 😊✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "saya mau pesan 1 BAL_012 dikirim untuk tanggal 4 agustus jam 12 siang, alamatnya Jl. H. Topek 1 No.14 (40242), nama penerima dan nomor penerimanya Refa 089932212313 notesnya : Selamat Sayang"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, terima kasih untuk detail pesanannya! 🌸 Untuk Bouquet Artificial BAL_012, tanggal 4 Agustus sudah memenuhi syarat Hari H-1, jadi aman diproses. Berikut data pemesanan yang sudah saya isi sesuai informasi Kakak, silakan dikoreksi jika ada yang perlu diubah ya 😊\n\nAttention !!\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Seluruh harga bunga di luar ongkos kirim\n• Jika DP sudah masuk, pesanan tidak bisa dibatalkan dan DP tidak bisa dikembalikan\n\nSilakan lengkapi data pemesanan berikut ya Kak 🌷\nNama penerima : Refa\nNo hp penerima : 089932212313\nJenis order : BAL_012\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : Jl. H. Topek 1 No.14 (40242)\nHari dan Waktu pengantaran/pengambilan : 4 Agustus 2026, Jam 12:00 WIB\nIsi Ucapan/Notes (Jika ada) : Selamat Sayang\n\nApakah data di atas sudah sesuai? Jika setuju, kita lanjut ke hitungan total harganya ya 🙏✨"
+      },
+      {
+        "sender": "customer",
+        "message_text": "ya sudah sesuai"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak, data sudah sesuai! 😊 Sekarang kita hitung totalnya ya:\n\n**Rincian Pesanan:**\n- BAL_012 : Rp 275.000\n- Estimasi ongkir dalam Bandung : Rp 30.000\n- **Total : Rp 305.000**\n\nPembayaran bisa dilakukan via **QRIS Jalé Florist** atau **Transfer Bank Mandiri 1310040388888 a/n Maria Aprilia Subernawati** dengan DP minimal 50% (Rp 152.500). Silakan pilih metode yang Kakak inginkan ya 🙏✨\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti tfnya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin.\n| Draft: Terima kasih Kak, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n📦 Ekspedisi: GOJEK INSTANT\n📅 Waktu Pick-up: 4 Agustus 2026, Jam 12:00 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Refa\n📞 No. HP: 0895339549364_SANDBOX\n📍 Alamat: Jl. H. Topek 1 No.14 (40242)\n\nLacak status pesanan Kakak di sini:\n👉 https://track.biteship.com/6a6bb45ebf8a83689f5ba24d?environment=development\n\n*(Catatan: Karena ini pesanan terjadwal, halaman pelacakan mungkin baru akan aktif atau memunculkan nama kurir pada hari H pengiriman ya, Kak!)*\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
+  }
+]

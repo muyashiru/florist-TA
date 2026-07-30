@@ -111,11 +111,11 @@ export async function connectToWhatsApp() {
                 const shouldSendQris = aiReply.includes('[SEND_QRIS]');
                 if (shouldSendQris) aiReply = aiReply.replace('[SEND_QRIS]', '').trim();
 
-                if (aiReply.includes('[HANDOFF]')) {
-                    console.log(`🚨 [HANDOFF TERDETEKSI] Pelanggan [${senderId}] dialihkan ke Admin Manusia!`);
+                if (aiReply.includes('[SILENT_HANDOFF]') || aiReply.includes('[HANDOFF]')) {
+                    console.log(`🚨 [HANDOFF] AI butuh bantuan admin. Pelanggan [${senderId}] dialihkan!`);
                     await db.query('UPDATE contacts SET is_ai_active = FALSE WHERE no_wa = ?', [senderId]);
-                    aiReply = aiReply.replace('[HANDOFF]', '').trim();
-                    aiReply += '\n\n*(Obrolan Anda telah dialihkan kepada Admin Manusia kami. Mohon tunggu sebentar ya Kak 🙏)*';
+                    await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'admin', ?)`, [senderId, `[ESCALATION]${aiReply}`]);
+                    return; // Hentikan proses, jangan kirim pesan apapun ke pelanggan
                 }
 
                 // Balas dengan Baileys (Reply/Quote)
@@ -141,7 +141,8 @@ export async function connectToWhatsApp() {
                 }
 
                 // Kirim foto rekomendasi
-                if (!shouldSendQris && products && products.length > 0) {
+                const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima');
+                if (!shouldSendQris && !isFormOrder && products && products.length > 0) {
                     const aiMentionedProducts = products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
                     for (const p of aiMentionedProducts.slice(0, 3)) {
                         if (p.image_url) {
