@@ -9,6 +9,8 @@ export default function Dashboard() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [showChatSearch, setShowChatSearch] = useState(false);
   const [activeTab, setActiveTab] = useState('All Chat');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -17,6 +19,7 @@ export default function Dashboard() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
+  const [activeChatMenu, setActiveChatMenu] = useState(null);
   const [hasValidated, setHasValidated] = useState(false);
   const [hideEscalation, setHideEscalation] = useState(false);
   const [scenarios, setScenarios] = useState([]);
@@ -108,6 +111,34 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Gagal toggle AI:', err);
+    }
+  };
+
+  const handlePinChat = async (noWa, currentPinStatus) => {
+    try {
+      await fetch(`http://localhost:3000/api/admin/contacts/${noWa}/pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_pinned: !currentPinStatus })
+      });
+      fetchContacts();
+    } catch (err) {
+      console.error('Gagal pin chat:', err);
+    }
+  };
+
+  const handleDeleteChat = async (noWa) => {
+    if (!window.confirm('Yakin ingin menghapus seluruh riwayat chat ini?')) return;
+    try {
+      await fetch(`http://localhost:3000/api/admin/contacts/${noWa}`, {
+        method: 'DELETE'
+      });
+      if (selectedContact?.no_wa === noWa) {
+        setSelectedContact(null);
+      }
+      fetchContacts();
+    } catch (err) {
+      console.error('Gagal hapus chat:', err);
     }
   };
 
@@ -281,22 +312,25 @@ export default function Dashboard() {
         
         {/* Sidebar Header */}
         <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex gap-4 text-gray-500">
-            <button className="hover:text-green-600 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-            </button>
-            <button className="hover:text-green-600 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-            </button>
-          </div>
+          <button 
+            onClick={() => navigate('/admin/overview')}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#00BFA5] text-white rounded-lg text-sm font-semibold shadow-sm hover:bg-[#009688] transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            Overview
+          </button>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              All
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            <button className="p-1.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            <button 
+              onClick={() => {
+                if (window.confirm('Yakin ingin keluar dari Inbox?')) {
+                  localStorage.removeItem('isAdminAuth');
+                  navigate('/admin/login');
+                }
+              }}
+              className="p-1.5 border border-gray-200 rounded-lg text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors" 
+              title="Logout"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
           </div>
         </div>
@@ -379,15 +413,43 @@ export default function Dashboard() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-0.5">
+                    <div className="flex justify-between items-baseline mb-0.5 group">
                       <div className="flex items-center gap-1.5 truncate">
+                        {c.is_pinned === 1 && (
+                          <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 24 24" style={{ transform: 'rotate(45deg)' }}><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" /></svg>
+                        )}
                         <span className="font-semibold text-[15px] text-gray-900 truncate">
                           {c.name} {c.no_wa.includes('SANDBOX') ? '(Sandbox)' : ''}
                         </span>
                       </div>
-                      <span className={`text-[11px] shrink-0 ${isActive ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                        {formatTime(c.last_message_time)}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0 relative">
+                        <span className={`text-[11px] ${isActive ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                          {formatTime(c.last_message_time)}
+                        </span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveChatMenu(activeChatMenu === c.no_wa ? null : c.no_wa); }}
+                          className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-gray-600 transition-opacity"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        
+                        {activeChatMenu === c.no_wa && (
+                          <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg py-1 z-50">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handlePinChat(c.no_wa, c.is_pinned); setActiveChatMenu(null); }}
+                              className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              {c.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDeleteChat(c.no_wa); setActiveChatMenu(null); }}
+                              className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              Delete Chat
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex items-center justify-between gap-2">
@@ -476,8 +538,25 @@ export default function Dashboard() {
                   </div>
                 )}
                 
-                <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-50 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
-                <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-50 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg></button>
+                {showChatSearch && (
+                  <input 
+                    type="text" 
+                    placeholder="Cari pesan..." 
+                    value={chatSearchQuery}
+                    onChange={(e) => setChatSearchQuery(e.target.value)}
+                    className="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#00BFA5] w-48 transition-all"
+                    autoFocus
+                  />
+                )}
+                <button 
+                  onClick={() => {
+                    setShowChatSearch(!showChatSearch);
+                    if (showChatSearch) setChatSearchQuery('');
+                  }}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${showChatSearch ? 'bg-gray-100 text-green-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </button>
                 
                 {/* AI Toggle / Halo Assistant Switch */}
                 <button 
@@ -505,7 +584,10 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {messages.map((msg, idx) => {
+              {messages.filter(msg => {
+                if (!chatSearchQuery) return true;
+                return msg.message_text?.toLowerCase().includes(chatSearchQuery.toLowerCase());
+              }).map((msg, idx) => {
                 // Jangan render kalau admin sudah delete for me
                 if (msg.is_deleted_by_admin) return null;
                 if (msg.message_text?.startsWith('[ESCALATION]')) return null; // Sembunyikan bubble eskalasi

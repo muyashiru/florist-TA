@@ -154,7 +154,7 @@ app.post('/api/test-ai', async (req, res) => {
         `, [sender, textToSave]);
 
         // Simpan gambar rekomendasi 1 per 1 ke MySQL agar dirender seperti WhatsApp asli
-        const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima');
+        const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima') || aiReply.includes('Detail Pesanan:') || aiReply.includes('Apakah data pesanan ini sudah benar');
         if (!shouldSendQris && !isSilentHandoff && !isFormOrder && products && products.length > 0) {
             const aiMentionedProducts = products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
             for (const p of aiMentionedProducts.slice(0, 3)) {
@@ -193,6 +193,151 @@ app.post('/api/reset-chat', async (req, res) => {
 });
 
 // --- API UNTUK DASHBOARD ADMIN ---
+
+// --- API DASHBOARD OVERVIEW ---
+
+// 1. Ambil Statistik Global
+app.get('/api/admin/overview/stats', async (req, res) => {
+    try {
+        const [totalChatsRows] = await db.query(`SELECT COUNT(DISTINCT no_wa) as total FROM messages WHERE DATE(created_at) = CURDATE()`);
+        const totalChats = totalChatsRows[0].total || 0;
+        
+        const [aiRows] = await db.query(`SELECT COUNT(*) as total FROM contacts WHERE is_ai_active = 1`);
+        const aiCount = aiRows[0].total || 0;
+        
+        const [allContactsRows] = await db.query(`SELECT COUNT(*) as total FROM contacts`);
+        const totalContacts = allContactsRows[0].total || 1; 
+        const aiPercentage = Math.round((aiCount / totalContacts) * 100);
+        
+        // Pesanan Aktif: Asumsi adalah pelanggan yang sudah mengisi formulir dan minta handoff (is_ai_active = 0)
+        const [activeOrdersRows] = await db.query(`SELECT COUNT(*) as total FROM contacts WHERE is_ai_active = 0`);
+        const activeOrders = activeOrdersRows[0].total || 0;
+
+        res.json({ success: true, data: { totalChats, aiPercentage, aiCount, activeOrders } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// 2. Ambil Tren & Grafik (Jam Sibuk & Produk Populer)
+app.get('/api/admin/overview/trends', async (req, res) => {
+    try {
+        const { filter = 'hari_ini' } = req.query; // 'hari_ini', 'minggu_ini', 'bulan_ini'
+        let dateCondition = "DATE(created_at) = CURDATE()";
+        if (filter === 'minggu_ini') dateCondition = "YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)";
+        else if (filter === 'bulan_ini') dateCondition = "YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())";
+
+        // Query Jam Sibuk
+        const [hoursRows] = await db.query(`SELECT HOUR(created_at) as hour, COUNT(*) as count FROM messages WHERE ${dateCondition} GROUP BY HOUR(created_at)`);
+        
+        // Distribusi jam menjadi 7 blok: <9, 9-11, 11-13, 13-15, 15-17, 17-19, >19
+        const busyHours = [0,0,0,0,0,0,0]; 
+        hoursRows.forEach(row => {
+            if (row.hour < 9) busyHours[0] += row.count;
+            else if (row.hour >= 9 && row.hour < 11) busyHours[1] += row.count;
+            else if (row.hour >= 11 && row.hour < 13) busyHours[2] += row.count;
+            else if (row.hour >= 13 && row.hour < 15) busyHours[3] += row.count;
+            else if (row.hour >= 15 && row.hour < 17) busyHours[4] += row.count;
+            else if (row.hour >= 17 && row.hour < 19) busyHours[5] += row.count;
+            else if (row.hour >= 19) busyHours[6] += row.count;
+        });
+        
+        const maxH = Math.max(...busyHours) || 1;
+        const normalizedHours = busyHours.map(h => Math.max(1, Math.round((h / maxH) * 12)));
+
+        // Query Produk Populer
+        const [productRows] = await db.query(`
+            SELECT message_text FROM messages 
+            WHERE sender = 'admin' AND message_text LIKE '%Detail Pesanan%' AND ${dateCondition}
+        `);
+        
+        const productCounts = {};
+        productRows.forEach(row => {
+            const match = row.message_text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
+            if (match && match[1]) {
+                const p = match[1].replace(/\*/g, '').trim();
+                productCounts[p] = (productCounts[p] || 0) + 1;
+            }
+        });
+        
+        const topProducts = Object.entries(productCounts)
+            .sort((a,b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(item => ({ name: item[0], count: item[1] }));
+            
+        if (topProducts.length === 0) {
+            topProducts.push({ name: 'Belum ada data', count: 0 });
+        }
+
+        res.json({ success: true, data: { busyHours: normalizedHours, topProducts } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// 3. Ambil Daftar Pesanan (Dari form AI di database pesan)
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT m.no_wa, m.message_text, m.created_at, c.name as customer_name
+            FROM messages m
+            JOIN contacts c ON m.no_wa = c.no_wa
+            WHERE m.sender = 'admin' AND (m.message_text LIKE '%Detail Pesanan%' OR m.message_text LIKE '%DETAIL PESANAN%')
+            ORDER BY m.id DESC LIMIT 50
+        `);
+
+        const orders = rows.map((row, index) => {
+            const text = row.message_text;
+            
+            const nameMatch = text.match(/\*?(?:Penerima|Pemesan|Nama|Atas Nama|Nama Penerima|Nama Pemesan):\*?\s*([^\n]+)/i);
+            const phoneMatch = text.match(/\*?(?:No HP|No\. HP|Nomor HP):\*?\s*([^\n]+)/i);
+            const addrMatch = text.match(/\*?(?:Alamat|Lokasi|Alamat Pengiriman|Alamat Pengiriman Lengkap dan Kode Pos):\*?\s*([^\n]+)/i);
+            const itemMatch = text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
+            const timeMatch = text.match(/\*?(?:Waktu|Tanggal|Hari dan Waktu|Waktu Pengambilan|Waktu Pengantaran):\*?\s*([^\n]+)/i);
+            const noteMatch = text.match(/\*?(?:Isi Ucapan|Notes|Ucapan):\*?\s*([^\n]+)/i);
+            
+            const destName = nameMatch ? nameMatch[1].replace(/\*/g, '').trim() : row.customer_name;
+            const destPhone = phoneMatch ? phoneMatch[1].replace(/\*/g, '').trim() : row.no_wa;
+            let destAddress = addrMatch ? addrMatch[1].replace(/\*/g, '').trim() : 'Diambil ke toko';
+            
+            // jika mengandung "Diambil ke toko" override ke Diambil ke toko
+            if(text.includes('PENGAMBILAN DI TOKO') || destAddress.toLowerCase().includes('toko')) {
+                destAddress = 'Diambil ke toko';
+            }
+            
+            const itemName = itemMatch ? itemMatch[1].replace(/\*/g, '').trim() : 'Pesanan Bunga';
+            const deliveryTime = timeMatch ? timeMatch[1].replace(/\*/g, '').trim() : row.created_at;
+            const notes = noteMatch ? noteMatch[1].replace(/\*/g, '').trim() : '-';
+
+            return {
+                id: (1000 + rows.length - index).toString(),
+                product: itemName,
+                created_at: row.created_at,
+                date: deliveryTime,
+                address: destAddress,
+                name: destName,
+                phone: destPhone,
+                notes: notes,
+                status: destAddress === 'Diambil ke toko' ? 'Siap Diambil' : 'Perlu Diproses'
+            };
+        });
+
+        res.json({ success: true, data: orders });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// 4. Copilot AI
+app.post('/api/admin/overview/copilot', async (req, res) => {
+    try {
+        const { query } = req.body;
+        // Mock jawaban copilot
+        res.json({ success: true, reply: "Berdasarkan analisis saya, belum ada komplain pelanggan hari ini. Mayoritas pemesanan (60%) adalah Buket Artificial. Apakah ada spesifik pesanan yang ingin dicek?" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 // Ambil semua kontak yang pernah chat
 app.get('/api/admin/contacts', async (req, res) => {
@@ -422,6 +567,7 @@ app.post('/api/admin/order-courier', async (req, res) => {
         const BITESHIP_TEST_KEY = 'biteship_test.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSmFsZUZsb3Jpc3QiLCJ1c2VySWQiOiI2YTY3YTJhODliN2QyZjc1MjJlZGE5ZDYiLCJpYXQiOjE3ODUyNjg2ODZ9.EvW8rEdn4IHORDT7PoSLCdEApuw7oTk-yb5zhpU_aZs';
         
         let destName = "Customer Jale";
+        let destPhone = no_wa;
         let destAddress = "Jl. Setiabudi No.22, Hegarmanah, Cidadap, Bandung";
         let itemName = "Bouquet Custom";
         let deliveryTimeText = null;
@@ -432,13 +578,15 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 const text = row.message_text;
                 
                 // 1. Coba tangkap dari Ringkasan AI (Detail Pesanan:)
-                if (text.includes('Detail Pesanan')) {
-                    const nameMatch = text.match(/\*?Penerima:\*?\s*([^\n]+)/i);
-                    const addrMatch = text.match(/\*?Alamat:\*?\s*([^\n]+)/i);
-                    const itemMatch = text.match(/\*?Produk:\*?\s*([^\n]+)/i);
-                    const timeMatch = text.match(/\*?Waktu:\*?\s*([^\n]+)/i);
+                if (text.includes('Detail Pesanan') || text.includes('Detail pesanan') || text.includes('DETAIL PESANAN') || text.includes('Silakan lengkapi data pemesanan')) {
+                    const nameMatch = text.match(/\*?(?:Penerima|Pemesan|Nama|Atas Nama|Nama Penerima|Nama Pemesan):\*?\s*([^\n]+)/i);
+                    const phoneMatch = text.match(/\*?(?:No HP|No\. HP|Nomor HP):\*?\s*([^\n]+)/i);
+                    const addrMatch = text.match(/\*?(?:Alamat|Lokasi|Alamat Pengiriman):\*?\s*([^\n]+)/i);
+                    const itemMatch = text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
+                    const timeMatch = text.match(/\*?(?:Waktu|Tanggal|Hari dan Waktu|Waktu Pengambilan|Waktu Pengantaran):\*?\s*([^\n]+)/i);
                     
                     if (nameMatch && nameMatch[1]) destName = nameMatch[1].replace(/\([0-9\s\+]+\)/g, '').replace(/\*/g, '').trim();
+                    if (phoneMatch && phoneMatch[1]) destPhone = phoneMatch[1].replace(/\*/g, '').trim();
                     if (addrMatch && addrMatch[1]) destAddress = addrMatch[1].replace(/\*/g, '').trim();
                     if (itemMatch && itemMatch[1]) itemName = itemMatch[1].replace(/\*/g, '').trim();
                     if (timeMatch && timeMatch[1]) deliveryTimeText = timeMatch[1].replace(/\*/g, '').trim();
@@ -447,13 +595,15 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 }
                 
                 // 2. Fallback: Coba tangkap dari ketikan manual pelanggan (Nama penerima:)
-                if (text.includes('Nama penerima') || text.includes('Nama')) {
-                    const nameMatch = text.match(/Nama(?: penerima|)\s*:\s*([^\n]+)/i);
+                if (text.includes('Nama penerima') || text.includes('Nama pemesan') || text.includes('Nama')) {
+                    const nameMatch = text.match(/Nama(?: penerima| pemesan|)\s*:\s*([^\n]+)/i);
+                    const phoneMatch = text.match(/No(?: hp| HP)(?: penerima| pemesan|)\s*:\s*([^\n]+)/i);
                     const addrMatch = text.match(/Alamat(?: Pengiriman|).*?:\s*([^\n]+)/i);
                     const itemMatch = text.match(/Jenis order\s*:\s*([^\n]+)/i);
-                    const timeMatch = text.match(/Waktu pengantaran(?:.*?):\s*([^\n]+)/i);
+                    const timeMatch = text.match(/(?:Hari dan |)Waktu (?:pengantaran|pengambilan)(?:.*?):\s*([^\n]+)/i);
                     
                     if (nameMatch && nameMatch[1]) destName = nameMatch[1].trim();
+                    if (phoneMatch && phoneMatch[1]) destPhone = phoneMatch[1].trim();
                     if (addrMatch && addrMatch[1]) destAddress = addrMatch[1].trim();
                     if (itemMatch && itemMatch[1]) itemName = itemMatch[1].trim();
                     if (timeMatch && timeMatch[1]) deliveryTimeText = timeMatch[1].trim();
@@ -469,7 +619,7 @@ app.post('/api/admin/order-courier', async (req, res) => {
             origin_address: "Jl. Cicalengka Raya No.8, Antapani Kidul, Kota Bandung",
             origin_coordinate: { latitude: -6.9182, longitude: 107.6533 },
             destination_contact_name: destName,
-            destination_contact_phone: no_wa || "081233334444",
+            destination_contact_phone: destPhone || "081233334444",
             destination_address: destAddress,
             destination_coordinate: { latitude: -6.866, longitude: 107.595 },
             couriers: "gojek", // Array of couriers to price/book
@@ -499,6 +649,29 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 parsedDeliveryTime = `${timeMatch[1]}:${timeMatch[2]}`;
                 parsedDeliveryType = "later";
             }
+        }
+
+        const isPickup = destAddress && (destAddress.toLowerCase().includes('ambil') || destAddress.toLowerCase().includes('toko') || destAddress.toLowerCase().includes('pickup') || destAddress.toLowerCase().includes('pick-up'));
+        
+        if (isPickup) {
+            console.log("🌸 Mode Ambil di Toko terdeteksi. Bypass API Biteship.");
+            let pickupTime = deliveryTimeText || 'Sesuai kesepakatan';
+            let msgText = `Halo Kak! Pesanan Kakak sudah kami proses ya 🌸✨\n\n*DETAIL PESANAN*\n🛍️ Item: ${itemName}\n\n*PENGAMBILAN DI TOKO*\n👤 Atas Nama: ${destName}\n📞 No. HP: ${destPhone}\n📅 Waktu Pengambilan: ${pickupTime}\n\n📍 Lokasi Toko:\nJalé Florist\nJl. Cicalengka Raya No.8, Antapani Kidul, Kec. Antapani, Kota Bandung, Jawa Barat 40291\n(Atau bisa cari 'Jalé Florist' di Google Maps)\n\nTerima kasih banyak sudah berbelanja di Jalé Florist! Kami tunggu kedatangannya ya Kak 🌸`;
+            
+            await db.query(
+                'INSERT INTO messages (no_wa, sender, message_text, reply_to_id) VALUES (?, "admin", ?, NULL)', 
+                [no_wa, msgText]
+            );
+
+            if (!no_wa.includes('SANDBOX') && typeof sock !== 'undefined') {
+                try {
+                    await sock.sendMessage(no_wa, { text: msgText });
+                } catch (err) {
+                    console.error("Gagal mengirim notif pickup via WA:", err.message);
+                }
+            }
+
+            return res.json({ success: true, resi: 'PICKUP', trackingUrl: '-', order_id: 'PICKUP-' + Date.now() });
         }
 
         const payloadOrder = {
@@ -723,38 +896,14 @@ app.get('/sandbox', (req, res) => {
     <html lang="id">
     <head>
         <meta charset="UTF-8"><title>🧪 Sandbox AI - Jalé Florist</title>
+        <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-            body { margin: 0; background: #e5ddd5; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-            
-            .app-container { width: 100%; max-width: 1000px; display: flex; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden; height: 95vh; border-radius: 20px; }
-            
-            .left-panel { width: 320px; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #d1d7db; }
-            .left-header { background: #00a884; color: white; padding: 25px 20px; text-align: center; font-weight: 600; font-size: 20px; display: flex; flex-direction: column; gap: 5px; }
-            .left-header span { font-size: 13px; font-weight: 400; opacity: 0.9; }
-            
-            .tools-bar { padding: 25px 20px; display: flex; flex-direction: column; gap: 15px; height: 100%; }
-            .tools-bar select { padding: 12px; border: 1px solid #d1d7db; border-radius: 8px; outline: none; font-size: 14px; background: white; cursor: pointer; color: #333; font-weight: 500; }
-            .btn-tool { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: white; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            .btn-tool:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-            .btn-tool:active { transform: translateY(1px); }
-            .btn-save { background: #25D366; color: #111b21; }
-            .btn-load { background: #008069; }
-            .btn-reset { background: #ef4444; margin-top: auto; }
-
-            .right-panel { flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; }
-            .right-header { background: #f0f2f5; padding: 12px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #d1d7db; }
-            .avatar { width: 42px; height: 42px; background: #00a884; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; }
-            .contact-info { display: flex; flex-direction: column; }
-            .contact-name { font-weight: 600; font-size: 16px; color: #111b21; }
-            .contact-status { font-size: 13px; color: #667781; }
-
-            .chat-container { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 12px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; }
+            * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+            .chat-bg { background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; }
             
             .msg-wrapper { display: flex; width: 100%; margin-bottom: 5px; }
             .msg { padding: 8px 12px; border-radius: 8px; max-width: 70%; font-size: 14.5px; line-height: 20px; position: relative; box-shadow: 0 1px 1px rgba(11,20,26,0.1); word-wrap: break-word; color: #111b21; }
             
-            /* Chat bubbles WhatsApp Style */
             .msg.user { background: #d9fdd3; margin-left: auto; border-top-right-radius: 0; }
             .msg.user::before { content: ""; position: absolute; top: 0; right: -8px; width: 0; height: 0; border-top: 0px solid transparent; border-left: 8px solid #d9fdd3; border-bottom: 10px solid transparent; }
             
@@ -766,56 +915,64 @@ app.get('/sandbox', (req, res) => {
             
             .msg-sender { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #00a884; }
             .msg.admin .msg-sender { color: #d35400; }
-            
-            .input-area { background: #f0f2f5; padding: 12px 20px; display: flex; gap: 12px; align-items: center; border-top: 1px solid #d1d7db; }
-            .input-area textarea { flex: 1; padding: 12px 18px; border: none; border-radius: 24px; resize: none; outline: none; font-size: 15px; max-height: 100px; background: #ffffff; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
-            .input-area textarea::placeholder { color: #8696a0; }
-            .btn-action { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; transition: all 0.2s; color: #54656f; }
-            .btn-action:hover { background: #e5e7eb; color: #00a884; }
-            .btn-send { background: #00a884; color: white; width: 40px; height: 40px; padding: 10px; }
-            .btn-send:hover { background: #008069; color: white; transform: scale(1.05); }
-            .btn-send svg { width: 20px; height: 20px; fill: currentColor; }
+
+            .custom-select-wrapper.open .custom-select { border-color: #00a884; box-shadow: 0 0 0 4px rgba(0, 168, 132, 0.15); }
+            .custom-select-wrapper.open .custom-select svg { transform: rotate(180deg); }
+            .custom-select-options { opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+            .custom-select-wrapper.open .custom-select-options { opacity: 1; visibility: visible; transform: translateY(0); }
+            .custom-select-options::-webkit-scrollbar { width: 6px; }
+            .custom-select-options::-webkit-scrollbar-track { background: transparent; }
+            .custom-select-options::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         </style>
     </head>
-    <body>
-        <div class="app-container">
+    <body class="m-0 bg-[#e5ddd5] flex items-center justify-center h-screen overflow-hidden">
+        <div class="w-full max-w-5xl flex bg-white shadow-2xl overflow-hidden h-[95vh] rounded-[20px]">
             <!-- LEFT PANEL -->
-            <div class="left-panel">
-                <div class="left-header">
+            <div class="w-[320px] bg-slate-50 flex flex-col border-r border-slate-300">
+                <div class="bg-emerald-600 text-white p-6 text-center font-semibold text-xl flex flex-col gap-1">
                     🧪 Sandbox AI 
-                    <span>Jalé Florist Testing Mode</span>
+                    <span class="text-[13px] font-normal opacity-90">Jalé Florist Testing Mode</span>
                 </div>
-                <div class="tools-bar">
-                    <select id="scenarioSelect"><option value="">-- Pilih Skenario --</option></select>
-                    <button onclick="loadScenario()" class="btn-tool btn-load">📂 Muat Skenario</button>
-                    <button onclick="saveScenario()" class="btn-tool btn-save">💾 Simpan Skenario Ini</button>
+                <div class="p-6 flex flex-col gap-4 h-full relative z-10">
+                    <div class="relative w-full custom-select-wrapper" id="scenarioDropdownWrapper">
+                        <div class="flex justify-between items-center px-4 py-3.5 border-2 border-slate-200 rounded-xl bg-white cursor-pointer text-slate-800 font-semibold text-sm transition-all shadow-sm custom-select hover:border-slate-300" id="customSelectLabel" onclick="toggleDropdown()">
+                            <span class="truncate">-- Pilih Skenario --</span>
+                            <svg class="w-[18px] h-[18px] min-w-[18px] transition-transform stroke-slate-500" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <ul class="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-xl shadow-lg border border-slate-200 max-h-[250px] overflow-y-auto custom-select-options list-none p-1.5 m-0 z-50" id="scenarioList">
+                            <!-- Options akan diisi oleh JS -->
+                        </ul>
+                    </div>
+                    <input type="hidden" id="scenarioSelect" value="">
+                    <button onclick="loadScenario()" class="px-4 py-3.5 rounded-lg font-semibold text-sm text-white transition-all shadow-sm bg-teal-700 hover:-translate-y-px hover:shadow-md active:translate-y-px">📂 Muat Skenario</button>
+                    <button onclick="saveScenario()" class="px-4 py-3.5 rounded-lg font-semibold text-sm text-slate-900 transition-all shadow-sm bg-[#25D366] hover:-translate-y-px hover:shadow-md active:translate-y-px">💾 Simpan Skenario Ini</button>
                     
-                    <button onclick="resetChat()" class="btn-tool btn-reset">🗑️ Reset Obrolan</button>
+                    <button onclick="resetChat()" class="px-4 py-3.5 rounded-lg font-semibold text-sm text-white transition-all shadow-sm bg-red-500 hover:-translate-y-px hover:shadow-md active:translate-y-px mt-auto">🗑️ Reset Obrolan</button>
                 </div>
             </div>
 
             <!-- RIGHT PANEL -->
-            <div class="right-panel">
-                <div class="right-header">
-                    <div class="avatar">J</div>
-                    <div class="contact-info">
-                        <div class="contact-name">Jalé Florist</div>
-                        <div class="contact-status">online (AI Assistant Active)</div>
+            <div class="flex-1 flex flex-col bg-[#efeae2] relative z-0">
+                <div class="bg-slate-50 py-3 px-5 flex items-center gap-4 border-b border-slate-300">
+                    <div class="w-11 h-11 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg">J</div>
+                    <div class="flex flex-col">
+                        <div class="font-bold text-[16px] text-[#111b21]">Jalé Florist</div>
+                        <div class="text-[13px] text-[#667781]">online (AI Assistant Active)</div>
                     </div>
                 </div>
 
-                <div class="chat-container" id="chatBox">
+                <div class="flex-1 overflow-y-auto p-7 flex flex-col gap-3 chat-bg" id="chatBox">
                     <div class="msg-wrapper"><div class="msg ai"><div class="msg-sender">~ AI Assistant</div>🤖 Halo! Saya AI Jalé Florist di dalam mode Sandbox. Mau tes tanya apa hari ini? 🌸</div></div>
                 </div>
                 
-                <div class="input-area">
+                <div class="bg-slate-50 py-3 px-5 flex gap-3 items-center border-t border-slate-300">
                     <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="sendPhoto(event)">
-                    <button onclick="document.getElementById('photoInput').click()" class="btn-action" title="Kirim Foto">
+                    <button onclick="document.getElementById('photoInput').click()" class="w-11 h-11 rounded-full border-none cursor-pointer flex items-center justify-center bg-transparent transition-all text-[#54656f] hover:bg-slate-200 hover:text-emerald-600" title="Kirim Foto">
                         <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M21.2 7.2H17l-1.5-1.5c-.3-.3-.7-.5-1.1-.5h-4.8c-.4 0-.8.2-1.1.5L7 7.2H2.8c-.4 0-.8.3-.8.8v11.2c0 .4.4.8.8.8h18.4c.4 0 .8-.4.8-.8V8c0-.5-.3-.8-.8-.8zm-9.2 10c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8.5c-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5-1.6-3.5-3.5-3.5z"></path></svg>
                     </button>
-                    <textarea id="msgInput" rows="1" placeholder="Ketik pesan pelanggan..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMsg();}"></textarea>
-                    <button onclick="sendMsg()" id="btnSend" class="btn-action btn-send">
-                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    <textarea id="msgInput" rows="1" placeholder="Ketik pesan pelanggan..." class="flex-1 py-3 px-4 border-none rounded-3xl resize-none outline-none text-[15px] max-h-[100px] bg-white shadow-sm placeholder-[#8696a0]" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMsg();}"></textarea>
+                    <button onclick="sendMsg()" id="btnSend" class="w-10 h-10 rounded-full border-none cursor-pointer flex items-center justify-center transition-all bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 p-2.5">
+                        <svg class="w-full h-full fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                     </button>
                 </div>
             </div>
@@ -827,15 +984,33 @@ app.get('/sandbox', (req, res) => {
             async function fetchScenarios() {
                 const res = await fetch('/api/scenarios');
                 const data = await res.json();
-                const sel = document.getElementById('scenarioSelect');
-                sel.innerHTML = '<option value="">-- Pilih Skenario Tersimpan --</option><option value="NEW">✨ -- Mulai Skenario Baru (Kosong) --</option>';
+                const list = document.getElementById('scenarioList');
+                list.innerHTML = '<li class="px-3 py-3 rounded-lg cursor-pointer text-[13.5px] text-slate-700 transition-colors border-b border-transparent mb-0.5 hover:bg-slate-100 hover:text-slate-900" onclick="selectOption(\\\'NEW\\\', \\\'✨ -- Mulai Skenario Baru (Kosong) --\\\')">✨ -- Mulai Skenario Baru (Kosong) --</li>';
                 if(data.scenarios) {
                     data.scenarios.forEach(s => {
-                        sel.innerHTML += '<option value="'+s.id+'">'+s.name+'</option>';
+                        const escapedName = s.name.replace(/'/g, "\\\\\\'").replace(/"/g, '&quot;');
+                        list.innerHTML += '<li class="px-3 py-3 rounded-lg cursor-pointer text-[13.5px] text-slate-700 transition-colors border-b border-transparent mb-0.5 hover:bg-slate-100 hover:text-slate-900" onclick="selectOption(\\\''+s.id+'\\\', \\\''+escapedName+'\\\')">'+s.name+'</li>';
                     });
                 }
             }
             
+            function toggleDropdown() {
+                document.getElementById('scenarioDropdownWrapper').classList.toggle('open');
+            }
+            
+            function selectOption(value, label) {
+                document.getElementById('scenarioSelect').value = value;
+                document.querySelector('#customSelectLabel span').innerText = label;
+                document.getElementById('scenarioDropdownWrapper').classList.remove('open');
+            }
+            
+            document.addEventListener('click', function(e) {
+                const wrapper = document.getElementById('scenarioDropdownWrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+
             async function saveScenario() {
                 const name = prompt("Masukkan nama skenario ini:");
                 if(!name) return;
@@ -865,7 +1040,6 @@ app.get('/sandbox', (req, res) => {
                 const res = await fetch('/api/sandbox-history');
                 const data = await res.json();
                 if (data.success) {
-                    // Update UI jika ada pesan baru
                     if (data.messages.length !== lastMessageCount) {
                         renderHistory(data.messages);
                         lastMessageCount = data.messages.length;
@@ -897,8 +1071,8 @@ app.get('/sandbox', (req, res) => {
                     }
                     if(displayMsg.includes('[ESCALATION]')) {
                         let cleanMsg = displayMsg.replace('[ESCALATION]', '').trim();
-                        let alasanMatch = cleanMsg.match(/Alasan:\s*(.*?)(?=\s*\|\s*Draft:|$)/is);
-                        let alasan = alasanMatch ? alasanMatch[1].replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim() : cleanMsg.replace(/\[HANDOFF\]|\[SILENT_HANDOFF\]/g, '').trim();
+                        let alasanMatch = cleanMsg.match(/Alasan:\\s*(.*?)(?=\\s*\\|\\s*Draft:|$)/is);
+                        let alasan = alasanMatch ? alasanMatch[1].replace(/\\[HANDOFF\\]|\\[SILENT_HANDOFF\\]/g, '').trim() : cleanMsg.replace(/\\[HANDOFF\\]|\\[SILENT_HANDOFF\\]/g, '').trim();
                         displayMsg = '<div style="color:#d35400; font-weight:bold; font-size:12px; margin-bottom:5px;">🚨 AI BERHENTI (ESKALASI)</div><div style="font-size:13px; color:#e67e22;"><b>Alasan:</b> ' + alasan + '</div><div style="font-size:11px; margin-top:5px; color:#7f8c8d;">(Di WhatsApp asli, pesan ini tidak terkirim ke customer)</div>';
                     }
 
@@ -907,7 +1081,6 @@ app.get('/sandbox', (req, res) => {
                 box.scrollTop = box.scrollHeight;
             }
 
-            // Polling history untuk menerima chat Admin secara real-time
             fetchScenarios();
             fetchHistory();
             setInterval(fetchHistory, 2000);
@@ -925,7 +1098,7 @@ app.get('/sandbox', (req, res) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 let caption = prompt("Masukkan pesan/keterangan untuk dikirim bersama foto ini (opsional):");
-                if (caption === null) return; // User membatalkan upload
+                if (caption === null) return; 
                 caption = caption.trim();
                 
                 const url = URL.createObjectURL(file);
@@ -985,7 +1158,7 @@ app.get('/sandbox', (req, res) => {
                         const file = item.getAsFile();
                         if (file) {
                             let caption = prompt("Masukkan pesan/keterangan untuk dikirim bersama foto ini (opsional):");
-                            if (caption === null) return; // User membatalkan upload
+                            if (caption === null) return; 
                             caption = caption.trim();
                             
                             const url = URL.createObjectURL(file);
@@ -1012,5 +1185,5 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server Backend berjalan di http://localhost:${PORT}`);
     console.log(`🧪 MODE SANDBOX AKTIF: Buka http://localhost:${PORT}/sandbox di browser Anda!`);
-    connectToWhatsApp(); // Menyalakan klien WhatsApp Web via Baileys
+    // connectToWhatsApp(); // Menyalakan klien WhatsApp Web via Baileys (dinonaktifkan sementara untuk testing)
 });

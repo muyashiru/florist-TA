@@ -14,7 +14,7 @@ const ORIGIN = {
 };
 
 // Database Koordinat & Estimasi Jarak Kecamatan di Bandung Raya (untuk mapping cepat)
-const BANDUNG_DISTRICTS = [
+export const BANDUNG_DISTRICTS = [
     { name: 'Antapani', km: 2, postal: 40291, lat: -6.9150, lon: 107.6580 },
     { name: 'Arcamanik', km: 3, postal: 40293, lat: -6.9180, lon: 107.6720 },
     { name: 'Kiaracondong', km: 4, postal: 40283, lat: -6.9250, lon: 107.6450 },
@@ -40,7 +40,7 @@ const BANDUNG_DISTRICTS = [
 export async function checkShippingRates(userMessage) {
     // 1. Cek apakah pesan berhubungan dengan ongkir, kirim, kurir, gojek, grab, lalamove, atau menyebut daerah di Bandung
     const msgLower = userMessage.toLowerCase();
-    const isShippingQuery = /ongkir|kirim|kurir|gojek|grab|lalamove|biaya pengiriman|ongkos|tarif/i.test(msgLower);
+    const isShippingQuery = /ongkir|kirim|kurir|gojek|grab|lalamove|biaya pengiriman|ongkos|tarif|alamat/i.test(msgLower);
     
     // Cari daerah tujuan yang disebut di dalam pesan
     const targetDistrict = BANDUNG_DISTRICTS.find(d => msgLower.includes(d.name.toLowerCase()));

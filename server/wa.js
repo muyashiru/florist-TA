@@ -14,7 +14,7 @@ export async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'silent' }) 
+        logger: pino({ level: 'error' }) 
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -28,10 +28,14 @@ export async function connectToWhatsApp() {
         }
         
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+            const statusCode = lastDisconnect.error?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             console.log('Koneksi terputus, menyambung ulang:', shouldReconnect);
+            console.log('Alasan putus (Error):', lastDisconnect.error?.message || lastDisconnect.error);
             if (shouldReconnect) {
-                connectToWhatsApp();
+                setTimeout(() => {
+                    connectToWhatsApp().catch(err => console.error('Gagal reconnect:', err));
+                }, 3000); // Beri jeda 3 detik sebelum reconnect
             } else {
                 console.log('Anda telah log out. Hapus folder .baileys_auth dan scan ulang.');
             }
@@ -111,10 +115,13 @@ export async function connectToWhatsApp() {
                 const shouldSendQris = aiReply.includes('[SEND_QRIS]');
                 if (shouldSendQris) aiReply = aiReply.replace('[SEND_QRIS]', '').trim();
 
-                if (aiReply.includes('[SILENT_HANDOFF]') || aiReply.includes('[HANDOFF]')) {
+                const isHandoff = /\[\s*(SILENT_HANDOFF|HANDOFF)\s*\]/i.test(aiReply);
+                if (isHandoff) {
                     console.log(`🚨 [HANDOFF] AI butuh bantuan admin. Pelanggan [${senderId}] dialihkan!`);
                     await db.query('UPDATE contacts SET is_ai_active = FALSE WHERE no_wa = ?', [senderId]);
-                    await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'admin', ?)`, [senderId, `[ESCALATION]${aiReply}`]);
+                    
+                    const cleanHandoffText = aiReply.replace(/\[\s*(SILENT_HANDOFF|HANDOFF)\s*\]/gi, '').trim();
+                    await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'admin', ?)`, [senderId, `[ESCALATION] ${cleanHandoffText}`]);
                     return; // Hentikan proses, jangan kirim pesan apapun ke pelanggan
                 }
 
@@ -141,7 +148,7 @@ export async function connectToWhatsApp() {
                 }
 
                 // Kirim foto rekomendasi
-                const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima');
+                const isFormOrder = aiReply.includes('Attention !!') || aiReply.includes('Nama penerima') || aiReply.includes('Detail Pesanan:') || aiReply.includes('Apakah data pesanan ini sudah benar');
                 if (!shouldSendQris && !isFormOrder && products && products.length > 0) {
                     const aiMentionedProducts = products.filter(p => aiReply.includes(p.name) || aiReply.includes(p.sku));
                     for (const p of aiMentionedProducts.slice(0, 3)) {

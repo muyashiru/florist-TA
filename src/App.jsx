@@ -8,6 +8,7 @@ import AboutPage from './pages/AboutPage';
 import CatalogPage from './pages/CatalogPage';
 import ContactPage from './pages/ContactPage';
 import Dashboard from './pages/Dashboard';
+import Overview from './pages/Overview';
 import LoginAdmin from './pages/LoginAdmin';
 
 function ScrollToTop() {
@@ -49,6 +50,7 @@ function App() {
 
         {/* Halaman Admin (Murni, tanpa Navbar/Footer publik) */}
         <Route path="/admin/login" element={<LoginAdmin />} />
+        <Route path="/admin/overview" element={<Overview />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
