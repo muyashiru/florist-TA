@@ -43,8 +43,8 @@ const infoItems = [
       </svg>
     ),
     label: 'WhatsApp',
-    value: '+62 895-3395-49364',
-    href: 'https://wa.me/62895339549364',
+    value: '+62 895-4027-65380',
+    href: 'https://wa.me/62895402765380',
     theme: {
       bg: 'bg-emerald-50/80 hover:bg-emerald-100',
       iconBg: 'bg-emerald-100 group-hover:bg-[#25D366]',

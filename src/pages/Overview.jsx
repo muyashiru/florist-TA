@@ -8,7 +8,7 @@ export default function Overview() {
   const [orderTab, setOrderTab] = useState('pickup');
   const [aiQuery, setAiQuery] = useState('');
   const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const [timeFilter, setTimeFilter] = useState('hari_ini');
+  const [timeFilter, setTimeFilter] = useState('bulan_ini');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [stats, setStats] = useState({ totalChats: 0, aiPercentage: 0, aiCount: 0, activeOrders: 0 });
   const [trends, setTrends] = useState({ busyHours: [1, 1, 1, 1, 1, 1, 1], topProducts: [] });
@@ -218,15 +218,15 @@ export default function Overview() {
             {activeMenu === 'summary' && (
               <div className="flex flex-col gap-8 max-w-6xl mx-auto">
                 {/* Top Analytics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg flex flex-col text-white relative overflow-hidden transform hover:scale-[1.02] transition-transform">
                     <div className="absolute -right-4 -top-4 opacity-10">
                       <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/></svg>
                     </div>
-                    <span className="text-blue-100 text-sm font-semibold mb-2">Total Chat Hari Ini</span>
+                    <span className="text-blue-100 text-sm font-semibold mb-2">Total Chat (Bulan Ini)</span>
                     <div className="flex items-end gap-3 z-10">
                       <span className="text-5xl font-black">{stats.totalChats}</span>
-                      <span className="text-sm bg-blue-400/30 px-3 py-1 rounded-full font-bold mb-1 shadow-sm">Hari ini</span>
+                      <span className="text-sm bg-blue-400/30 px-3 py-1 rounded-full font-bold mb-1 shadow-sm">Bulan ini</span>
                     </div>
                   </div>
                   
@@ -240,19 +240,7 @@ export default function Overview() {
                       <span className="text-xs text-green-50 bg-black/10 px-2.5 py-1.5 rounded-lg mb-1 shadow-sm font-bold">({stats.aiCount} chat)</span>
                     </div>
                   </div>
-                  
-                  <div className="bg-gradient-to-br from-orange-400 to-pink-500 p-6 rounded-2xl shadow-lg flex flex-col text-white relative overflow-hidden transform hover:scale-[1.02] transition-transform">
-                    <div className="absolute -right-4 -top-4 opacity-10">
-                      <svg className="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                    </div>
-                    <span className="text-orange-100 text-sm font-semibold mb-2">Pesanan Aktif (Sandbox)</span>
-                    <div className="flex items-end gap-3 z-10">
-                      <span className="text-5xl font-black">{stats.activeOrders}</span>
-                      <span className="text-xs text-white bg-white/20 px-2.5 py-1.5 rounded-lg mb-1 shadow-sm font-bold tracking-wide">PERLU DISIAPKAN</span>
-                    </div>
-                  </div>
                 </div>
-
                 {/* Trends Section */}
                 <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-6">

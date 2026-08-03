@@ -1,280 +1,152 @@
 <div align="center">
 
-# 🌸 Jalé Florist — Website Katalog
+# 🌸 Jalé Florist — Sistem Cerdas E-Commerce & AI Chatbot Terintegrasi
 
 **Bloom with meaning, delivered with love.**
 
-Website katalog bunga modern dan elegan untuk **Jalé Florist**, toko bunga di Bandung yang menyediakan berbagai rangkaian bunga segar, artificial, bloombox, wedding arrangement, dan masih banyak lagi.
+Proyek Tugas Akhir ini merupakan sistem informasi e-commerce komprehensif untuk **Jalé Florist**, sebuah toko bunga di Bandung. Sistem ini mengintegrasikan katalog frontend interaktif dengan backend cerdas yang ditenagai oleh **DeepSeek AI**, WhatsApp Gateway (**Baileys**), dan API Logistik (**Biteship**), serta dilengkapi dengan Dashboard Admin untuk pemantauan Real-time.
 
 ![React](https://img.shields.io/badge/React-18+-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-5+-646CFF?style=flat-square&logo=vite&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3+-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=node.js&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=flat-square&logo=mysql&logoColor=white)
 
 </div>
 
 ---
 
-## 📖 Tentang Project
+## 📖 Deskripsi Proyek (Tugas Akhir)
 
-Website ini merupakan website katalog resmi **Jalé Florist** — florist lokal Bandung yang menghadirkan berbagai macam rangkaian bunga cantik dan unik sebagai gift dan pelengkap momen spesialmu. Website ini dibuat **bilingual (Indonesia & Inggris)** dan dirancang agar pelanggan dapat dengan mudah menjelajahi produk, melihat detail, dan langsung menghubungi toko via WhatsApp.
+Sistem ini dirancang untuk mendigitalisasi dan mengotomatisasi proses bisnis penjualan bunga di Jalé Florist. Pelanggan dapat berbelanja melalui website katalog, maupun langsung menghubungi WhatsApp toko. Pesan WhatsApp yang masuk akan ditangani secara otomatis oleh **AI Assistant (DeepSeek)** yang mampu merekomendasikan produk, menerima pesanan, dan mengkalkulasi ongkos kirim secara presisi menggunakan **Biteship API**.
 
-### 🏪 Informasi Toko
-
-| Info | Detail |
-|------|--------|
-| **Nama** | Jalé Florist |
-| **Alamat** | Jl. Cicalengka Raya No.8, Antapani Kidul, Kec. Antapani, Kota Bandung, Jawa Barat 40291 |
-| **Jam Operasional** | Senin – Minggu, 08.30 – 18.30 WIB *(Libur Nasional menyesuaikan)* |
-| **WhatsApp** | [+62 813-6793-1303](https://wa.me/+6281367931303) |
-| **Instagram** | [@jale.floristt](https://instagram.com/jale.floristt) |
-| **TikTok** | [@jale.florist](https://tiktok.com/@jale.florist) |
-| **Google Maps** | [Lihat Lokasi](https://maps.app.goo.gl/YoGwkwk3kZKQYqru8) |
-
-### 🎨 Palet Warna
-
-| Variabel | Hex | Keterangan |
-|----------|-----|------------|
-| `--color-cream` | `#FAF7F3` | Background utama |
-| `--color-blush` | `#F0E4D3` | Background section sekunder |
-| `--color-sand` | `#DCC5B2` | Elemen dekoratif / border |
-| `--color-rose` | `#D9A299` | Aksen utama / CTA |
+Jika AI tidak dapat menangani permintaan khusus (misal: komplain, pertanyaan di luar konteks, atau permintaan khusus pelanggan), AI akan secara otomatis menonaktifkan dirinya dan melakukan *Handoff* ke Admin Manusia melalui sistem peringatan di **Admin Dashboard**.
 
 ---
 
 ## ✨ Fitur Utama
 
-### 1. 🔝 Sticky Navigation Bar
-Header yang selalu terlihat di bagian atas layar saat di-scroll. Navigasi terdiri dari:
-- **Home** — Kembali ke hero section
-- **About** — Tentang Jalé Florist
-- **Catalog** — Halaman katalog produk
-- **Contact** — Informasi kontak & footer
+### 💻 1. Frontend Web Catalog (React + Vite)
+- **Katalog Produk Dinamis**: Menampilkan koleksi bunga dengan filter kategori dan ukuran.
+- **Quick View Modal**: Detail produk tanpa perlu berpindah halaman, lengkap dengan kalkulasi total harga & *add-on* bunga ekstra.
+- **Smart WhatsApp Generator**: Mempermudah pemesanan dengan men-generate pesan otomatis ke WA toko.
+- **Desain Modern & Responsif**: Menggunakan Tailwind CSS dengan estetik warna khusus toko (*Cream, Blush, Sand, Rose*).
 
-### 2. 🖼️ Hero Section
-- **4 banner** otomatis slide ke kanan dan berulang (auto-carousel)
-- Menampilkan **tagline** toko: *"Bloom with meaning, delivered with love"* & *"Handle with care, happiness inside"*
-- Tombol **CTA "Lihat Koleksi"** yang langsung menggulir halaman ke bagian katalog
+### 🧠 2. AI Chatbot (DeepSeek AI)
+- **Natural Language Processing**: Merespons pelanggan dengan gaya bahasa kasual, ramah, dan solutif layaknya admin manusia.
+- **Order Management**: AI otomatis mengekstrak pesanan dari obrolan pelanggan (Nama produk, SKU, tanggal kirim, alamat lengkap).
+- **Auto-Handoff (Escalation)**: Jika percakapan butuh campur tangan manusia (misalnya: *komplain order lama*, *chat berbelit-belit*), AI mematikan dirinya secara otomatis (`is_ai_active = 0`) dan mengaktifkan peringatan *Need Help* untuk Admin.
 
-### 3. 🌺 Katalog Produk Dinamis
-- **Filter berdasarkan kategori** produk
-- **Filter berdasarkan ukuran** produk
-- Layout **grid 6 kolom** di desktop dan **2 kolom** di perangkat mobile
-- Semua produk dilengkapi nama, kode SKU, dan harga
+### 🚚 3. Logistik Terintegrasi (Biteship API)
+- **Cek Ongkir Otomatis**: AI memvalidasi alamat pelanggan dengan lokasi toko di Antapani, Bandung dan menghitung ongkos kirim seketika.
+- **Generate Resi (Waybill)**: Otomatis membuat order pengiriman (Kurir Instan/Same-day) ketika pelanggan setuju dan melampirkan bukti transfer.
 
-### 4. 🔍 Product Card & Quick View
-- Klik foto produk → muncul **modal (pop-up)** berisi:
-  - Foto produk ukuran besar
-  - Nama produk, SKU, harga
-  - Deskripsi lengkap produk
-- Tanpa berpindah halaman dari katalog
+### 📱 4. WhatsApp Gateway (Baileys)
+- Terhubung langsung ke API WhatsApp Web secara independen (Multi-device).
+- Mendukung dua mode: **Mode Live** (menggunakan WhatsApp asli) dan **Mode Sandbox** (simulator chat web untuk testing yang aman tanpa scan QR).
 
-### 5. 💬 Smart WhatsApp Generator
-Saat tombol pesan diklik, URL WhatsApp di-encode otomatis dengan pesan yang dipersonalisasi:
-```
-Halo Jalé Florist, saya tertarik memesan [Nama Produk] (Kode: [SKU]) 
-seharga [Harga]. Apakah masih tersedia?
-```
-
-### 6. ⭐ Testimonial Section
-Testimoni statis yang diambil dari **review Google Maps** pelanggan nyata. Ditampilkan dalam format card yang menarik.
-
-### 7. 📍 Footer & Informasi Kontak
-- Alamat lengkap toko
-- Embed atau tautan **Google Maps**
-- **Jam operasional** toko
-- Ikon dan tautan ke media sosial (Instagram, TikTok, WhatsApp)
-
-### 8. 📲 Floating WhatsApp Button
-Tombol WhatsApp mengambang di **sudut kanan bawah** layar, tersedia di semua halaman untuk memudahkan pelanggan menghubungi toko kapan saja.
-
----
-
-## 🗂️ Kategori Produk
-
-### 🌸 1. Bouquet Artificial
-| Ukuran | Ketersediaan |
-|--------|-------------|
-| Petite Size | ✅ |
-| Small (S) | ✅ |
-| Medium (M) | ✅ |
-| Large (L) | ✅ |
-| Extra Large (XL) | ✅ |
-| Double Extra Large (XXL) | ✅ |
-| Human Size | ✅ |
-| Customize | ✅ |
-
-### 🌹 2. Fresh Flowers
-Ukuran sama seperti Bouquet Artificial, ditambah:
-- **Seri Premium** — rangkaian bunga import dan mix lokal import
-
-### 🎁 3. Bloom Box & Vas
-| Produk | Ukuran |
-|--------|--------|
-| Bloom Box Artificial | S, M, L, XL, Customize |
-| Bloom Box Fresh Flowers | S, M, L, XL, Customize |
-| Bloom Box Mix (Artificial + Fresh) | S, M, L, XL, Customize |
-| Vas Artificial | Petite, S, M, L, XL, Customize |
-| Vas Fresh Flowers | S, M, L, XL, Customize |
-
-### 🍿 4. Snack & Gift Bucket
-- Ukuran: **Customize**
-
-### 💵 5. Money Bucket
-- Ukuran: Sesuai jumlah lembar uang
-- Bentuk uang: **Flat** | **Bunga** | **Tulip** | **Customize**
-
-### 💒 6. Wedding Arrangement
-- Fresh Flowers & Artificial
-- Ukuran: **Customize**
-
-### 🪧 7. Standing Flower & PVC Board
-- Ukuran: **Customize**
-
-### 🎀 8. Decoration
-- Ukuran & jenis: Menyesuaikan kebutuhan
+### 🎛️ 5. Admin Command Center (Dashboard)
+- **Live Chat Monitor**: Memantau ratusan percakapan antara AI dan pelanggan secara real-time.
+- **Manajemen Handoff**: Admin dapat mengambil alih percakapan (Human Mode) yang tertunda dan membalas langsung dari sistem.
+- **Antrean Produksi**: Memisahkan dan mengelola daftar pesanan *Pickup* dan *Delivery*, mencetak ID Order Biteship dan Resi Kurir.
+- **Data & Performa**: Dashboard analitik yang menampilkan visualisasi tren jam sibuk, total percakapan, produk terpopuler, dan efisiensi kesuksesan AI secara otomatis.
+- **AI Copilot**: Asisten AI internal untuk Admin yang bisa digunakan merangkum sentimen seluruh obrolan pelanggan hari ini.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Teknologi | Versi | Kegunaan |
-|-----------|-------|----------|
-| [React](https://react.dev/) | 18+ | UI Library |
-| [Vite](https://vitejs.dev/) | 5+ | Build tool & dev server |
-| JavaScript | ES2022 | Bahasa pemrograman utama |
-| [Tailwind CSS](https://tailwindcss.com/) | 3+ | Utility-first styling |
+| Komponen | Teknologi | Keterangan |
+|----------|-----------|------------|
+| **Frontend** | React 18, Vite, Tailwind CSS | UI Catalog & Dashboard Admin |
+| **Backend** | Node.js, Express.js | Server utama, REST API endpoints |
+| **Database** | MySQL (mysql2) | Penyimpanan chat history, kontak, order |
+| **WhatsApp** | `@whiskeysockets/baileys` | Web-socket koneksi ke server WhatsApp |
+| **AI Engine** | DeepSeek AI | Otak chatbot pelanggan & Copilot admin |
+| **Logistik** | Biteship API | API Kurir Instan (Gojek/Grab) & Cek Ongkir |
 
 ---
 
-## 📁 Struktur Folder
+## 🗄️ Skema Database (MySQL)
 
-```
-florist/
-├── public/
-│   ├── images/
-│   │   ├── hero/             # Foto banner hero (4 slide)
-│   │   └── products/         # Foto produk per kategori
-│   └── favicon.ico
-├── src/
-│   ├── assets/               # Asset statis (logo, ikon, dll)
-│   ├── components/
-│   │   ├── Navbar.jsx        # Sticky navigation bar
-│   │   ├── Hero.jsx          # Hero section dengan carousel
-│   │   ├── About.jsx         # Section tentang toko
-│   │   ├── Catalog.jsx       # Halaman katalog & filter
-│   │   ├── ProductCard.jsx   # Card produk
-│   │   ├── QuickView.jsx     # Modal quick view produk
-│   │   ├── Testimonial.jsx   # Section testimoni
-│   │   ├── Footer.jsx        # Footer & kontak
-│   │   └── FloatingWA.jsx    # Floating WhatsApp button
-│   ├── data/
-│   │   ├── products.js       # Data produk (nama, SKU, harga, kategori)
-│   │   └── testimonials.js   # Data testimoni statis
-│   ├── utils/
-│   │   └── whatsapp.js       # Helper WhatsApp URL generator
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── .gitignore
-├── index.html
-├── package.json
-├── tailwind.config.js
-├── vite.config.js
-└── README.md
+Database utama bernama `jale_florist_ta`, terdiri dari tabel:
+1. **`contacts`**: Menyimpan nomor unik pelanggan, nama, dan status `is_ai_active` (1 = AI, 0 = Admin).
+2. **`messages`**: Menyimpan seluruh riwayat obrolan (Timestamp, Sender: 'ai' / 'customer' / 'admin').
+3. **`orders`**: Menyimpan data transaksi final (ID, Nama, Produk, Alamat, Tanggal Kirim, Status Order, `biteship_order_id`, `resi`).
+
+---
+
+## 📁 Struktur Folder Proyek
+
+```text
+florist - TA/
+├── src/                      # (FRONTEND: KODE REACT)
+│   ├── components/           # Komponen UI (Navbar, QuickView, Dashboard Sidebar)
+│   ├── pages/                # Halaman Web (Dashboard Inbox, Overview, Sandbox, Catalog)
+│   ├── data/                 # Database frontend statis (Produk, Testimonial)
+│   └── utils/                # Helper functions
+├── server/                   # (BACKEND: KODE NODE.JS)
+│   ├── index.js              # Entry point Express, koneksi DB, Endpoints Dashboard
+│   ├── wa.js                 # Inti logika Baileys & DeepSeek AI (System Prompt, Handoff)
+│   └── shipping.js           # Pengaturan endpoint API pengiriman (Biteship)
+├── scripts/                  # (GENERATOR DATA)
+│   └── seed_dummy_data.cjs   # Generator 150+ data organik (komplain, order, tanya alamat)
+├── sandbox_scenarios.json    # Berisi 52 skenario arsitektur chat unik untuk testing sistem
+├── package.json              # Daftar dependencies Node.js
+└── tailwind.config.js        # Konfigurasi gaya CSS
 ```
 
 ---
 
-## 🚀 Cara Menjalankan Project
+## 🚀 Panduan Menjalankan Proyek
 
-### Prasyarat
-- [Node.js](https://nodejs.org/) v18 atau lebih baru
-- npm v9 atau lebih baru
+### 1. Prasyarat
+- **Node.js** v18 atau lebih baru.
+- **MySQL Server** (XAMPP / Laragon dsb) berjalan di localhost port `3306`.
+- API Key aktif untuk DeepSeek AI dan Biteship.
 
-### Instalasi
+### 2. Konfigurasi Database
+Buat database bernama `jale_florist_ta` di MySQL Anda. 
+Sistem *backend* Node.js dirancang untuk **secara otomatis** membuat tabel-tabel (`contacts`, `messages`, `orders`) saat pertama kali server dijalankan.
 
+### 3. Instalasi Dependensi
 ```bash
-# 1. Clone repository (jika dari Git)
-git clone <url-repository>
-cd florist
-
-# 2. Install semua dependensi
+# Clone proyek, kemudian install package
 npm install
+```
 
-# 3. Jalankan development server
+### 4. Menjalankan Server & Web
+Sistem ini menggunakan dua terminal terpisah.
+
+**Terminal 1 (Jalankan Backend Node.js):**
+```bash
+node server/index.js
+```
+*(Setelah jalan, Anda akan diminta memilih Mode: Tekan `[1]` untuk Sandbox atau `[2]` untuk Live WA Baileys)*
+
+**Terminal 2 (Jalankan Frontend Vite):**
+```bash
 npm run dev
 ```
+Akses aplikasi melalui browser di URL: `http://localhost:5173`
 
-Buka browser dan akses: **http://localhost:5173**
-
-### Build untuk Produksi
-
+### 5. Generate Data Simulasi (Opsional - Untuk Sidang)
+Jika database Anda masih kosong dan Anda ingin mengisi *Dashboard Admin* dengan ratusan data percakapan yang organik (lengkap dengan pesanan kurir, komplain pengiriman, dll), jalankan perintah:
 ```bash
-npm run build
+node scripts/seed_dummy_data.cjs
+node fix_escalations.cjs
 ```
-
-Hasil build akan tersedia di folder `dist/`.
+Refresh dashboard Anda, dan seluruh data statistik serta daftar pesanan antrean produksi akan otomatis terisi dan siap didemonstrasikan.
 
 ---
 
-## 📝 Panduan Pengembangan
+## 🧪 Mode Sandbox vs Live WA
 
-### Menambah Produk Baru
-Edit file `src/data/products.js` dan tambahkan objek produk dengan format:
-```js
-{
-  id: "ART-XXL-001",          // SKU unik
-  name: "Bouquet Artificial XXL",
-  category: "bouquet-artificial",
-  size: "XXL",
-  price: 250000,               // dalam Rupiah
-  image: "/images/products/art-xxl-001.jpg",
-  description: "Rangkaian bunga artificial ukuran double extra large...",
-  available: true,
-}
-```
-
-### Menambah Testimoni
-Edit file `src/data/testimonials.js`:
-```js
-{
-  id: 1,
-  name: "Nama Pelanggan",
-  rating: 5,                   // 1-5
-  review: "Isi testimoni dari Google Maps...",
-  date: "Maret 2025",
-}
-```
-
-### Konfigurasi WhatsApp
-Nomor WhatsApp toko dapat diubah di file `src/utils/whatsapp.js`:
-```js
-export const WHATSAPP_NUMBER = "+6281367931303";
-```
-
----
-
-## 🌐 Bahasa
-
-Website ini tersedia dalam dua bahasa:
-- 🇮🇩 **Bahasa Indonesia** (default)
-- 🇬🇧 **English**
-
-Konten teks disimpan terpisah agar mudah dikelola dan diperbarui.
-
----
-
-## 📄 Lisensi
-
-Project ini dibuat khusus untuk keperluan bisnis **Jalé Florist**. Seluruh hak cipta konten, foto produk, dan branding merupakan milik Jalé Florist.
+- **Mode Sandbox**: Mode virtual tertutup yang disiapkan khusus untuk **demonstrasi Tugas Akhir**. Di mode ini, Chatbot akan berkomunikasi melalui antarmuka web khusus di `http://localhost:5173/sandbox` menggunakan API lokal tanpa perlu terhubung ke Meta / scan QR Code. Sangat berguna untuk pengujian algoritma secara masif tanpa takut terkena *spam-ban*.
+- **Mode Live WA**: Mode riil dimana sistem `wa.js` men-generate QR Code WhatsApp untuk di-scan. Segera setelah di-scan, AI akan membalas semua pesan WhatsApp pelanggan yang masuk secara *real-time*.
 
 ---
 
 <div align="center">
-
-Dibuat dengan ❤️ untuk **Jalé Florist** — Bandung, Jawa Barat
-
-*Handle with care, happiness inside.*
-
+Dibuat sebagai <b>Proyek Tugas Akhir</b>.<br>
+<i>Handle with care, happiness inside.</i>
 </div>

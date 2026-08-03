@@ -201,7 +201,7 @@ app.post('/api/reset-chat', async (req, res) => {
 // 1. Ambil Statistik Global
 app.get('/api/admin/overview/stats', async (req, res) => {
     try {
-        const [totalChatsRows] = await db.query(`SELECT COUNT(DISTINCT no_wa) as total FROM messages WHERE DATE(created_at) = CURDATE()`);
+        const [totalChatsRows] = await db.query(`SELECT COUNT(DISTINCT no_wa) as total FROM messages WHERE created_at >= CURDATE() - INTERVAL 30 DAY`);
         const totalChats = totalChatsRows[0].total || 0;
         
         const [aiRows] = await db.query(`SELECT COUNT(*) as total FROM contacts WHERE is_ai_active = 1`);
@@ -225,9 +225,9 @@ app.get('/api/admin/overview/stats', async (req, res) => {
 app.get('/api/admin/overview/trends', async (req, res) => {
     try {
         const { filter = 'hari_ini' } = req.query; // 'hari_ini', 'minggu_ini', 'bulan_ini'
-        let dateCondition = "DATE(created_at) = CURDATE()";
-        if (filter === 'minggu_ini') dateCondition = "YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)";
-        else if (filter === 'bulan_ini') dateCondition = "YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())";
+        let dateCondition = "created_at >= CURDATE() - INTERVAL 1 DAY";
+        if (filter === 'minggu_ini') dateCondition = "created_at >= CURDATE() - INTERVAL 7 DAY";
+        else if (filter === 'bulan_ini') dateCondition = "created_at >= CURDATE() - INTERVAL 30 DAY";
 
         // Query Jam Sibuk
         const [hoursRows] = await db.query(`SELECT HOUR(created_at) as hour, COUNT(*) as count FROM messages WHERE ${dateCondition} GROUP BY HOUR(created_at)`);
@@ -249,23 +249,15 @@ app.get('/api/admin/overview/trends', async (req, res) => {
 
         // Query Produk Populer
         const [productRows] = await db.query(`
-            SELECT message_text FROM messages 
-            WHERE sender = 'admin' AND message_text LIKE '%Detail Pesanan%' AND ${dateCondition}
+            SELECT product, COUNT(*) as count 
+            FROM orders 
+            WHERE ${dateCondition} 
+            GROUP BY product 
+            ORDER BY count DESC 
+            LIMIT 3
         `);
         
-        const productCounts = {};
-        productRows.forEach(row => {
-            const match = row.message_text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
-            if (match && match[1]) {
-                const p = match[1].replace(/\*/g, '').trim();
-                productCounts[p] = (productCounts[p] || 0) + 1;
-            }
-        });
-        
-        const topProducts = Object.entries(productCounts)
-            .sort((a,b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(item => ({ name: item[0], count: item[1] }));
+        const topProducts = productRows.map(row => ({ name: row.product, count: row.count }));
             
         if (topProducts.length === 0) {
             topProducts.push({ name: 'Belum ada data', count: 0 });
