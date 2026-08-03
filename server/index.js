@@ -773,6 +773,13 @@ Terima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 
             [no_wa, msgText]
         );
 
+        // SIMPAN KE TABEL ORDERS
+        await db.query(
+            `INSERT INTO orders (no_wa, customer_name, product, delivery_date, address, status, biteship_order_id, resi) 
+             VALUES (?, ?, ?, ?, ?, 'Diproses', ?, ?)`,
+            [no_wa, finalDestName, itemName, dateStr, finalDestAddress, data.id, resi]
+        );
+
         // Kirim resi ke WhatsApp pelanggan jika bukan sandbox
         if (!no_wa.includes('SANDBOX') && typeof sock !== 'undefined') {
             try {
