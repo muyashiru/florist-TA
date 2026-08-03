@@ -502,7 +502,7 @@ export default function Dashboard() {
               </div>
               
               <div className="flex items-center gap-2">
-                {selectedContact.no_wa === '0895339549364_SANDBOX' && (
+                {selectedContact.no_wa === '0895402765380_SANDBOX' && (
                   <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
                     <select 
                       id="dashboardScenarioSelect" 

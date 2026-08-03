@@ -26,12 +26,13 @@ async function searchProductsInDB(userMessage, chatHistory = []) {
 
         // 1. Cek apakah ada kode SKU di pesan user SAAT INI (mendukung format BAXL_005, BAXL 005, BAXL005, BAXL-005) - PRIORITY UTAMA
         let lowerMsg = userMessage.toLowerCase();
-        let skuMatch = userMessage.match(/[a-zA-Z]{2,6}[_\-\s]?[0-9]{2,4}/g);
+        const skuRegex = /\b(BAM|BAL|BAXL|BAXXL|BAHS|BAP|BAS|BFP|BFL|BFS|VAS|LILY|WED|BGRAD|SUNFLOWER|SUNFLOWERSARTIFL|WC|THUM|OMAKASE|BLBOX|BSNACK|BA|BF)[_\-\s]?[0-9]{1,4}\b/ig;
+        let skuMatch = userMessage.match(skuRegex);
 
         // 2. Fallback: Cek apakah ada kode SKU di HISTORY jika user tidak minta event baru atau SKU baru
         if (!skuMatch && chatHistory.length > 0) {
             const historyText = chatHistory.map(m => m.content).join(' ');
-            skuMatch = historyText.match(/[a-zA-Z]{2,6}[_\-\s]?[0-9]{2,4}/g);
+            skuMatch = historyText.match(skuRegex);
         }
 
         if (skuMatch && skuMatch.length > 0) {
@@ -68,7 +69,44 @@ async function searchProductsInDB(userMessage, chatHistory = []) {
             if (rows.length > 0) return rows;
         }
 
-        // 3. Pemetaan Tema / Acara ke Kode SKU (Event Mapping) - Fallback
+        // 2. Filter kata-kata umum (Stopwords Bahasa Indonesia) agar tidak mencari kata "Halo", "Admin", "Saya", dsb.
+        const stopWords = ['bunga', 'apa', 'aja', 'saja', 'jenis', 'macam', 'halo', 'admin', 'jale', 'florist', 'saya', 'ingin', 'mau', 'memesan', 'pesan', 'produk', 'berikut', 'kode', 'harga', 'dasar', 'total', 'mohon', 'info', 'ketersediaan', 'stok', 'dan', 'biaya', 'ongkir', 'ongkirnya', 'terima', 'kasih', 'link', 'https', 'http', 'com', 'api', 'preview', 'yang', 'buat', 'untuk', 'dari', 'di', 'ke', 'aku', 'min', 'kak', 'dong', 'ada', 'cari', 'pesen', 'beli', 'dikirim', 'tanggal', 'jam', 'siang', 'sore', 'malam', 'pagi', 'alamatnya', 'jl', 'rt', 'rw', 'kel', 'kec', 'kota', 'jawa', 'barat', 'nama', 'penerim', 'penerima', 'nomor', 'notesnya', 'tolong', 'buatkan', 'ulang', 'tahun', 'pacar', 'istri', 'suami', 'nikah', 'wisuda', 'januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+
+        const cleanWords = userMessage
+            .toLowerCase()
+            .replace(/buket/g, 'bouquet')
+            .replace(/gradu\b/g, 'graduation')
+            .replace(/artif\b/g, 'artificial')
+            .replace(/[^a-z0-9\s_]/g, ' ') 
+            .split(/\s+/)
+            .filter(w => w.length > 2 && !stopWords.includes(w));
+
+        // 3. Cari berdasarkan kata kunci (Ranking System - Sangat Kuat)
+        if (cleanWords.length > 0) {
+            const terms = cleanWords.slice(0, 6); // ambil maksimal 6 kata kunci penting
+            let scoreSelects = [];
+            let queryParamsScore = [];
+            for (const term of terms) {
+                scoreSelects.push(`(IF(name LIKE ?, 1, 0) + IF(category LIKE ?, 1, 0) + IF(sku LIKE ?, 2, 0) + IF(size LIKE ?, 1, 0))`);
+                queryParamsScore.push(`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`);
+            }
+            
+            const scoreExpression = scoreSelects.join(' + ');
+            const queryScoreStr = `
+                SELECT sku, name, category, size, price, image_url,
+                (${scoreExpression}) AS relevance_score
+                FROM products
+                WHERE available = 1
+                HAVING relevance_score >= 2
+                ORDER BY relevance_score DESC, RAND()
+                LIMIT 5
+            `;
+            
+            const [rows] = await db.query(queryScoreStr, queryParamsScore);
+            if (rows.length > 0) return rows;
+        }
+
+        // 4. Pemetaan Tema / Acara ke Kode SKU (Event Mapping) - Fallback Terakhir
         const eventMap = {
             'sempro': ['BGRAD', 'SUNFLOWER'],
             'sidang': ['BGRAD', 'SUNFLOWER', 'THUM'],
@@ -100,45 +138,6 @@ async function searchProductsInDB(userMessage, chatHistory = []) {
             const conditions = mappedSkus.map(s => `sku LIKE '${s}%'`).join(' OR ');
             const [rows] = await db.query(`SELECT sku, name, category, size, price, image_url FROM products WHERE available = 1 AND (${conditions}) ORDER BY RAND() LIMIT 5`);
             if (rows.length > 0) return rows;
-        }
-
-
-
-        // 2. Filter kata-kata umum (Stopwords Bahasa Indonesia) agar tidak mencari kata "Halo", "Admin", "Saya", dsb.
-        const stopWords = ['bunga', 'apa', 'aja', 'saja', 'jenis', 'macam', 'halo', 'admin', 'jale', 'florist', 'saya', 'ingin', 'mau', 'memesan', 'pesan', 'produk', 'berikut', 'kode', 'harga', 'dasar', 'total', 'mohon', 'info', 'ketersediaan', 'stok', 'dan', 'biaya', 'ongkir', 'ongkirnya', 'terima', 'kasih', 'link', 'https', 'http', 'com', 'api', 'preview', 'yang', 'buat', 'untuk', 'dari', 'di', 'ke', 'aku', 'min', 'kak', 'dong', 'ada', 'cari', 'pesen', 'beli'];
-
-        const cleanWords = userMessage
-            .toLowerCase()
-            .replace(/buket/g, 'bouquet')
-            .replace(/gradu\b/g, 'graduation')
-            .replace(/artif\b/g, 'artificial')
-            .replace(/[^a-z0-9\s_]/g, ' ') // hapus tanda baca kecuali underscore
-            .split(/\s+/)
-            .filter(w => w.length > 2 && !stopWords.includes(w));
-
-        // 4. Cari berdasarkan kata kunci penting yang tersisa
-        if (cleanWords.length > 0) {
-            const terms = cleanWords.slice(0, 4).map(w => `%${w}%`);
-            let queryStr = 'SELECT sku, name, category, size, price, image_url FROM products WHERE available = 1';
-            let queryParams = [];
-
-            for (const term of terms) {
-                queryStr += ' AND (name LIKE ? OR category LIKE ? OR sku LIKE ? OR size LIKE ?)';
-                queryParams.push(term, term, term, term);
-            }
-            queryStr += ' LIMIT 5';
-
-            const [rows] = await db.query(queryStr, queryParams);
-            if (rows.length > 0) return rows;
-
-            // Jika AND tidak ketemu, coba fallback dengan OR untuk semua term
-            const fallbackConditions = terms.map(t => '(name LIKE ? OR category LIKE ? OR sku LIKE ? OR size LIKE ?)').join(' OR ');
-            const fallbackParams = terms.flatMap(t => [t, t, t, t]);
-            const [fallbackOR] = await db.query(
-                `SELECT sku, name, category, size, price, image_url FROM products WHERE (${fallbackConditions}) AND available = 1 LIMIT 5`,
-                fallbackParams
-            );
-            if (fallbackOR.length > 0) return fallbackOR;
         }
 
         // 4. Fallback: Jika tidak ditemukan, kembalikan 3 produk dari kategori yang berbeda (agar AI punya variasi penawaran, tidak hanya barang mahal/Human Size)
@@ -225,7 +224,7 @@ ${shippingContext ? shippingContext : ''}
 --- INFORMASI BISNIS & OPERASIONAL ---
 - Alamat Toko: Jln. Cicalengka Raya No 8, Antapani Kidul, Antapani, Kota Bandung 40291.
 - Jam Operasional: Setiap hari 08.30 - 18.30 WIB (pengiriman/pickup hanya bisa dijadwalkan di rentang jam ini; di luar jam ini wajib dialihkan ke hari berikutnya).
-- Kontak Toko: WA 0895339549364 | Email: floristjale@gmail.com | Website: https://jaleflorist.com | IG: instagram.com/@jale.floristt
+- Kontak Toko: WA 0895402765380 | Email: floristjale@gmail.com | Website: https://jaleflorist.com | IG: instagram.com/@jale.floristt
 
 --- ATURAN KEPRIBADIAN & GAYA KOMUNIKASI ---
 1. IDENTITAS: Selalu sebut dirimu sebagai 'Jale' atau 'saya' (JANGAN 'AI Jale' atau third-person). Gunakan sapaan eksklusif 'Kak' kepada pelanggan.

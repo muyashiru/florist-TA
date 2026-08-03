@@ -1,4 +1,4 @@
-import { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadMediaMessage } from '@whiskeysockets/baileys';
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadMediaMessage, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
 import fs from 'fs';
@@ -7,6 +7,7 @@ import { db } from './db.js';
 import { askQwenAI } from './ai.js';
 
 export let sock;
+let reconnectAttempts = 0;
 
 export async function connectToWhatsApp() {
     console.log("⏳ Memulai sistem WhatsApp (Mesin Baileys)...");
@@ -14,7 +15,9 @@ export async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'error' }) 
+        logger: pino({ level: 'error' }),
+        browser: Browsers.macOS('Desktop'),
+        syncFullHistory: false
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -33,13 +36,23 @@ export async function connectToWhatsApp() {
             console.log('Koneksi terputus, menyambung ulang:', shouldReconnect);
             console.log('Alasan putus (Error):', lastDisconnect.error?.message || lastDisconnect.error);
             if (shouldReconnect) {
+                reconnectAttempts++;
+                const delay = Math.min(reconnectAttempts * 5000, 60000); // Bertahap naik dari 5 detik hingga maksimal 60 detik
+                console.log(`Menunggu ${delay/1000} detik sebelum mencoba ulang (Percobaan ke-${reconnectAttempts})...`);
                 setTimeout(() => {
                     connectToWhatsApp().catch(err => console.error('Gagal reconnect:', err));
-                }, 3000); // Beri jeda 3 detik sebelum reconnect
+                }, delay);
             } else {
-                console.log('Anda telah log out. Hapus folder .baileys_auth dan scan ulang.');
+                console.log('Anda telah log out. Menghapus folder .baileys_auth dan mencoba ulang otomatis...');
+                if (fs.existsSync('.baileys_auth')) {
+                    fs.rmSync('.baileys_auth', { recursive: true, force: true });
+                }
+                setTimeout(() => {
+                    connectToWhatsApp().catch(err => console.error('Gagal reconnect:', err));
+                }, 3000);
             }
         } else if (connection === 'open') {
+            reconnectAttempts = 0; // Reset counter saat berhasil terhubung
             console.log('✅ WhatsApp Baileys BERHASIL Terhubung dan Siap Menerima Pesan!');
         }
     });
@@ -124,6 +137,12 @@ export async function connectToWhatsApp() {
                     await db.query(`INSERT INTO messages (no_wa, sender, message_text) VALUES (?, 'admin', ?)`, [senderId, `[ESCALATION] ${cleanHandoffText}`]);
                     return; // Hentikan proses, jangan kirim pesan apapun ke pelanggan
                 }
+
+                // Tambahkan jeda dan status "Mengetik..." agar terlihat seperti manusia asli (Anti-Ban)
+                await sock.sendPresenceUpdate('composing', senderId);
+                const delayMs = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000; // Delay acak 2-4 detik
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                await sock.sendPresenceUpdate('paused', senderId);
 
                 // Balas dengan Baileys (Reply/Quote)
                 const sentMsg = await sock.sendMessage(senderId, { text: aiReply }, { quoted: msg });

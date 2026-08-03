@@ -23,6 +23,8 @@ export const BANDUNG_DISTRICTS = [
     { name: 'Cicaheum', km: 3.5, postal: 40195, lat: -6.9020, lon: 107.6550 },
     { name: 'Dago', km: 8, postal: 40135, lat: -6.8850, lon: 107.6140 },
     { name: 'Dipatiukur', km: 7.5, postal: 40132, lat: -6.8900, lon: 107.6150 },
+    { name: 'Dipati Ukur', km: 7.5, postal: 40132, lat: -6.8900, lon: 107.6150 },
+    { name: 'Coblong', km: 7.5, postal: 40132, lat: -6.8900, lon: 107.6150 },
     { name: 'Setiabudi', km: 10, postal: 40143, lat: -6.8650, lon: 107.5950 },
     { name: 'Sukajadi', km: 9, postal: 40162, lat: -6.8850, lon: 107.5950 },
     { name: 'Pasteur', km: 10, postal: 40161, lat: -6.8950, lon: 107.5850 },

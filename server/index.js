@@ -3,7 +3,9 @@ import cors from 'cors';
 import { db } from './db.js';
 import { connectToWhatsApp, sock } from './wa.js';
 import { askQwenAI } from './ai.js';
+import { BANDUNG_DISTRICTS } from './shipping.js';
 import multer from 'multer';
+import readline from 'readline';
 import path from 'path';
 import fs from 'fs';
 
@@ -60,7 +62,7 @@ app.post('/api/scenarios', async (req, res) => {
     try {
         const { name } = req.body;
         if (!name) return res.status(400).json({ success: false, message: "Nama skenario dibutuhkan" });
-        const [messages] = await db.query("SELECT sender, message_text FROM messages WHERE no_wa = '0895339549364_SANDBOX' ORDER BY created_at ASC");
+        const [messages] = await db.query("SELECT sender, message_text FROM messages WHERE no_wa = '0895402765380_SANDBOX' ORDER BY created_at ASC");
         const scenarios = fs.existsSync(SCENARIOS_FILE) ? JSON.parse(fs.readFileSync(SCENARIOS_FILE)) : [];
         const newScenario = { id: Date.now().toString(), name, messages };
         scenarios.push(newScenario);
@@ -81,11 +83,11 @@ app.post('/api/scenarios/:id/load', async (req, res) => {
         const lastMsg = scenario.messages[scenario.messages.length - 1];
         const isEscalation = lastMsg && lastMsg.message_text.startsWith('[ESCALATION]');
         
-        await db.query("DELETE FROM messages WHERE no_wa = '0895339549364_SANDBOX'");
-        await db.query("UPDATE contacts SET is_ai_active = ? WHERE no_wa = '0895339549364_SANDBOX'", [isEscalation ? 0 : 1]);
+        await db.query("DELETE FROM messages WHERE no_wa = '0895402765380_SANDBOX'");
+        await db.query("UPDATE contacts SET is_ai_active = ? WHERE no_wa = '0895402765380_SANDBOX'", [isEscalation ? 0 : 1]);
         
         for (const msg of scenario.messages) {
-            await db.query("INSERT INTO messages (no_wa, sender, message_text, created_at) VALUES ('0895339549364_SANDBOX', ?, ?, NOW())", [msg.sender, msg.message_text]);
+            await db.query("INSERT INTO messages (no_wa, sender, message_text, created_at) VALUES ('0895402765380_SANDBOX', ?, ?, NOW())", [msg.sender, msg.message_text]);
             await new Promise(r => setTimeout(r, 100)); // urutan rapi
         }
         res.json({ success: true, message: "Skenario berhasil diload", messages: scenario.messages });
@@ -96,7 +98,7 @@ app.post('/api/scenarios/:id/load', async (req, res) => {
 
 app.get('/api/sandbox-history', async (req, res) => {
     try {
-        const [messages] = await db.query("SELECT sender, message_text FROM messages WHERE no_wa = '0895339549364_SANDBOX' ORDER BY created_at ASC");
+        const [messages] = await db.query("SELECT sender, message_text FROM messages WHERE no_wa = '0895402765380_SANDBOX' ORDER BY created_at ASC");
         res.json({ success: true, messages });
     } catch (e) {
         res.json({ success: false, message: e.message });
@@ -106,7 +108,7 @@ app.get('/api/sandbox-history', async (req, res) => {
 // 2. API SANDBOX (Untuk ngetes balasan AI & melihat kecepatan responnya)
 app.post('/api/test-ai', async (req, res) => {
     try {
-        const { message, sender = '0895339549364_SANDBOX' } = req.body;
+        const { message, sender = '0895402765380_SANDBOX' } = req.body;
         if (!message) return res.status(400).json({ success: false, message: 'Pesan wajib diisi' });
 
         // Simpan ke MySQL agar AI punya memori percakapan di Sandbox!
@@ -184,7 +186,7 @@ app.post('/api/test-ai', async (req, res) => {
 // 2.b. API RESET CHAT (Hapus riwayat pesan sandbox agar bisa tes skenario baru dari awal)
 app.post('/api/reset-chat', async (req, res) => {
     try {
-        const { sender = '0895339549364_SANDBOX' } = req.body;
+        const { sender = '0895402765380_SANDBOX' } = req.body;
         await db.query('DELETE FROM messages WHERE no_wa = ?', [sender]);
         res.json({ success: true, message: 'Riwayat percakapan berhasil dihapus!' });
     } catch (error) {
@@ -275,54 +277,13 @@ app.get('/api/admin/overview/trends', async (req, res) => {
     }
 });
 
-// 3. Ambil Daftar Pesanan (Dari form AI di database pesan)
+// 3. Ambil Daftar Pesanan (Dari tabel orders)
 app.get('/api/admin/orders', async (req, res) => {
     try {
         const [rows] = await db.query(`
-            SELECT m.no_wa, m.message_text, m.created_at, c.name as customer_name
-            FROM messages m
-            JOIN contacts c ON m.no_wa = c.no_wa
-            WHERE m.sender = 'admin' AND (m.message_text LIKE '%Detail Pesanan%' OR m.message_text LIKE '%DETAIL PESANAN%')
-            ORDER BY m.id DESC LIMIT 50
+            SELECT * FROM orders ORDER BY created_at DESC LIMIT 50
         `);
-
-        const orders = rows.map((row, index) => {
-            const text = row.message_text;
-            
-            const nameMatch = text.match(/\*?(?:Penerima|Pemesan|Nama|Atas Nama|Nama Penerima|Nama Pemesan):\*?\s*([^\n]+)/i);
-            const phoneMatch = text.match(/\*?(?:No HP|No\. HP|Nomor HP):\*?\s*([^\n]+)/i);
-            const addrMatch = text.match(/\*?(?:Alamat|Lokasi|Alamat Pengiriman|Alamat Pengiriman Lengkap dan Kode Pos):\*?\s*([^\n]+)/i);
-            const itemMatch = text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
-            const timeMatch = text.match(/\*?(?:Waktu|Tanggal|Hari dan Waktu|Waktu Pengambilan|Waktu Pengantaran):\*?\s*([^\n]+)/i);
-            const noteMatch = text.match(/\*?(?:Isi Ucapan|Notes|Ucapan):\*?\s*([^\n]+)/i);
-            
-            const destName = nameMatch ? nameMatch[1].replace(/\*/g, '').trim() : row.customer_name;
-            const destPhone = phoneMatch ? phoneMatch[1].replace(/\*/g, '').trim() : row.no_wa;
-            let destAddress = addrMatch ? addrMatch[1].replace(/\*/g, '').trim() : 'Diambil ke toko';
-            
-            // jika mengandung "Diambil ke toko" override ke Diambil ke toko
-            if(text.includes('PENGAMBILAN DI TOKO') || destAddress.toLowerCase().includes('toko')) {
-                destAddress = 'Diambil ke toko';
-            }
-            
-            const itemName = itemMatch ? itemMatch[1].replace(/\*/g, '').trim() : 'Pesanan Bunga';
-            const deliveryTime = timeMatch ? timeMatch[1].replace(/\*/g, '').trim() : row.created_at;
-            const notes = noteMatch ? noteMatch[1].replace(/\*/g, '').trim() : '-';
-
-            return {
-                id: (1000 + rows.length - index).toString(),
-                product: itemName,
-                created_at: row.created_at,
-                date: deliveryTime,
-                address: destAddress,
-                name: destName,
-                phone: destPhone,
-                notes: notes,
-                status: destAddress === 'Diambil ke toko' ? 'Siap Diambil' : 'Perlu Diproses'
-            };
-        });
-
-        res.json({ success: true, data: orders });
+        res.json({ success: true, data: rows });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -579,11 +540,11 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 
                 // 1. Coba tangkap dari Ringkasan AI (Detail Pesanan:)
                 if (text.includes('Detail Pesanan') || text.includes('Detail pesanan') || text.includes('DETAIL PESANAN') || text.includes('Silakan lengkapi data pemesanan')) {
-                    const nameMatch = text.match(/\*?(?:Penerima|Pemesan|Nama|Atas Nama|Nama Penerima|Nama Pemesan):\*?\s*([^\n]+)/i);
-                    const phoneMatch = text.match(/\*?(?:No HP|No\. HP|Nomor HP):\*?\s*([^\n]+)/i);
-                    const addrMatch = text.match(/\*?(?:Alamat|Lokasi|Alamat Pengiriman):\*?\s*([^\n]+)/i);
-                    const itemMatch = text.match(/\*?(?:Produk|Item|Jenis Order|Pesanan):\*?\s*([^\n]+)/i);
-                    const timeMatch = text.match(/\*?(?:Waktu|Tanggal|Hari dan Waktu|Waktu Pengambilan|Waktu Pengantaran):\*?\s*([^\n]+)/i);
+                    const nameMatch = text.match(/(?:^|\n)[ \t]*\*?(?:Penerima|Pemesan|Nama|Atas Nama|Nama Penerima|Nama Pemesan)\*?:\*?[ \t]*([^\n]+)/i);
+                    const phoneMatch = text.match(/(?:^|\n)[ \t]*\*?(?:No HP|No\. HP|Nomor HP)\*?:\*?[ \t]*([^\n]+)/i);
+                    const addrMatch = text.match(/(?:^|\n)[ \t]*\*?(?:Alamat|Lokasi|Alamat Pengiriman)\*?:\*?[ \t]*([^\n]+)/i);
+                    const itemMatch = text.match(/(?:^|\n)[ \t]*\*?(?:Produk|Item|Jenis Order|Pesanan)\*?:\*?[ \t]*([^\n]+)/i);
+                    const timeMatch = text.match(/(?:^|\n)[ \t]*\*?(?:Waktu|Tanggal|Hari dan Waktu|Waktu Pengambilan|Waktu Pengantaran)\*?:\*?[ \t]*([^\n]+)/i);
                     
                     if (nameMatch && nameMatch[1]) destName = nameMatch[1].replace(/\([0-9\s\+]+\)/g, '').replace(/\*/g, '').trim();
                     if (phoneMatch && phoneMatch[1]) destPhone = phoneMatch[1].replace(/\*/g, '').trim();
@@ -596,11 +557,11 @@ app.post('/api/admin/order-courier', async (req, res) => {
                 
                 // 2. Fallback: Coba tangkap dari ketikan manual pelanggan (Nama penerima:)
                 if (text.includes('Nama penerima') || text.includes('Nama pemesan') || text.includes('Nama')) {
-                    const nameMatch = text.match(/Nama(?: penerima| pemesan|)\s*:\s*([^\n]+)/i);
-                    const phoneMatch = text.match(/No(?: hp| HP)(?: penerima| pemesan|)\s*:\s*([^\n]+)/i);
-                    const addrMatch = text.match(/Alamat(?: Pengiriman|).*?:\s*([^\n]+)/i);
-                    const itemMatch = text.match(/Jenis order\s*:\s*([^\n]+)/i);
-                    const timeMatch = text.match(/(?:Hari dan |)Waktu (?:pengantaran|pengambilan)(?:.*?):\s*([^\n]+)/i);
+                    const nameMatch = text.match(/(?:^|\n)[ \t]*Nama(?: penerima| pemesan|)\*?:\*?[ \t]*([^\n]+)/i);
+                    const phoneMatch = text.match(/(?:^|\n)[ \t]*No(?: hp| HP)(?: penerima| pemesan|)\*?:\*?[ \t]*([^\n]+)/i);
+                    const addrMatch = text.match(/(?:^|\n)[ \t]*Alamat(?: Pengiriman|).*?\*?:\*?[ \t]*([^\n]+)/i);
+                    const itemMatch = text.match(/(?:^|\n)[ \t]*Jenis order\*?:\*?[ \t]*([^\n]+)/i);
+                    const timeMatch = text.match(/(?:^|\n)[ \t]*(?:Hari dan |)Waktu (?:pengantaran|pengambilan)(?:.*?)\*?:\*?[ \t]*([^\n]+)/i);
                     
                     if (nameMatch && nameMatch[1]) destName = nameMatch[1].trim();
                     if (phoneMatch && phoneMatch[1]) destPhone = phoneMatch[1].trim();
@@ -612,19 +573,53 @@ app.post('/api/admin/order-courier', async (req, res) => {
             }
         } catch(e) { console.error('Gagal extract formulir:', e); }
 
+        let itemPrice = 150000;
+        try {
+            const skuMatch = itemName.match(/([A-Z]{3,4}_\d{3})/i);
+            const queryStr = skuMatch ? skuMatch[1] : itemName;
+            if (queryStr && queryStr.trim() !== '') {
+                const [pRows] = await db.query('SELECT price FROM products WHERE sku LIKE ? OR name LIKE ? LIMIT 1', [`%${queryStr}%`, `%${queryStr}%`]);
+                if (pRows.length > 0 && pRows[0].price) {
+                    itemPrice = pRows[0].price;
+                }
+            }
+        } catch(e) {}
+
+        let destLat = -6.9180;
+        let destLon = 107.6090;
+        let destPostalCode = 40111; // default postal code
+        
+        if (destAddress) {
+            const addrLower = destAddress.toLowerCase();
+            // Coba cari kode pos di alamat (5 digit)
+            const postalMatch = destAddress.match(/\b(40\d{3})\b/);
+            if (postalMatch) {
+                destPostalCode = parseInt(postalMatch[1], 10);
+            }
+            
+            const matchedDistrict = BANDUNG_DISTRICTS.find(d => addrLower.includes(d.name.toLowerCase()));
+            if (matchedDistrict) {
+                destLat = matchedDistrict.lat;
+                destLon = matchedDistrict.lon;
+                if (!postalMatch) destPostalCode = matchedDistrict.postal;
+            }
+        }
+
         // Data pesanan dummy untuk Sandbox Biteship (memastikan origin dan destination terisi agar sukses)
         const payload = {
             origin_contact_name: "Jalé Florist",
-            origin_contact_phone: "0895339549364",
+            origin_contact_phone: "0895402765380",
             origin_address: "Jl. Cicalengka Raya No.8, Antapani Kidul, Kota Bandung",
             origin_coordinate: { latitude: -6.9182, longitude: 107.6533 },
+            origin_postal_code: 40291,
             destination_contact_name: destName,
             destination_contact_phone: destPhone || "081233334444",
             destination_address: destAddress,
-            destination_coordinate: { latitude: -6.866, longitude: 107.595 },
+            destination_postal_code: destPostalCode,
+            destination_coordinate: { latitude: destLat, longitude: destLon },
             couriers: "gojek", // Array of couriers to price/book
             items: [
-                { name: itemName, value: 150000, quantity: 1, weight: 1000 }
+                { name: itemName, value: itemPrice, quantity: 1, weight: 1000 }
             ]
         };
 
@@ -661,6 +656,13 @@ app.post('/api/admin/order-courier', async (req, res) => {
             await db.query(
                 'INSERT INTO messages (no_wa, sender, message_text, reply_to_id) VALUES (?, "admin", ?, NULL)', 
                 [no_wa, msgText]
+            );
+
+            // SIMPAN KE TABEL ORDERS
+            await db.query(
+                `INSERT INTO orders (no_wa, customer_name, product, delivery_date, address, status, biteship_order_id, resi) 
+                 VALUES (?, ?, ?, ?, ?, 'Diproses', ?, ?)`,
+                [no_wa, destName, itemName, pickupTime, 'Diambil ke toko', 'PICKUP-' + Date.now(), 'PICKUP']
             );
 
             if (!no_wa.includes('SANDBOX') && typeof sock !== 'undefined') {
@@ -730,6 +732,7 @@ app.post('/api/admin/order-courier', async (req, res) => {
             msgText = `Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨
 
 *DETAIL PENGIRIMAN*
+🛍️ Item: ${itemName}
 📦 Ekspedisi: ${courierName}
 📅 Waktu Pick-up: ${dateStr}
 
@@ -748,6 +751,7 @@ Terima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 
             msgText = `Halo Kak! Pesanan Kakak sudah diserahkan ke kurir ya 🚚💨
 
 *DETAIL PENGIRIMAN*
+🛍️ Item: ${itemName}
 📦 Ekspedisi: ${courierName}
 🧾 No Resi: ${resi}
 📅 Waktu Pick-up: ${dateStr}
@@ -1183,7 +1187,29 @@ app.get('/sandbox', (req, res) => {
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server Backend berjalan di http://localhost:${PORT}`);
+    console.log(`\n🚀 Server Backend berjalan di http://localhost:${PORT}`);
     console.log(`🧪 MODE SANDBOX AKTIF: Buka http://localhost:${PORT}/sandbox di browser Anda!`);
-    // connectToWhatsApp(); // Menyalakan klien WhatsApp Web via Baileys (dinonaktifkan sementara untuk testing)
+    
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    console.log(`\n======================================================`);
+    console.log(`PILIHAN MODE KONEKSI WHATSAPP`);
+    console.log(`======================================================`);
+    console.log(`[1] Mode Sandbox Saja (Tanpa koneksi ke API WhatsApp asli)`);
+    console.log(`[2] Mode Live (Terhubung langsung ke WhatsApp asli via Baileys)`);
+    console.log(`======================================================`);
+    
+    rl.question('Masukkan pilihan Anda (1/2) [Default: 1]: ', (answer) => {
+        if (answer.trim() === '2') {
+            console.log("\n📡 Mengaktifkan koneksi ke WhatsApp Asli (Live Mode)...");
+            connectToWhatsApp(); 
+        } else {
+            console.log("\n🛡️ Mode Live dinonaktifkan. Menjalankan di Mode Sandbox sepenuhnya.");
+            console.log("Tidak ada API ke WhatsApp yang dipanggil untuk menghindari banned.");
+        }
+        rl.close();
+    });
 });

@@ -4,7 +4,7 @@
     <business_name>Jalé Florist</business_name>
     <business_address>Jln. Cicalengka Raya No 8, Antapani Kidul, Antapani, Kota Bandung 40291</business_address>
     <operating_hours>Setiap hari 08.30 - 18.30 WIB (admin manusia di jam ini; AI online 24 jam). Pengiriman/pickup hanya bisa dijadwalkan dalam rentang 08.30 - 18.30 WIB; di luar itu wajib dialihkan ke jam operasional di hari berikutnya.</operating_hours>
-    <contact_phone>WhatsApp 081367931303</contact_phone>
+    <contact_phone>WhatsApp 0895402765380</contact_phone>
     <contact_email>floristjale@gmail.com</contact_email>
     <website>Website katalog: jaleflorist.com | Instagram: @jale.floristt</website>
   </business_information>
@@ -573,7 +573,7 @@ a/n: Maria Aprilia Subernawati</bubble>
         </case>
         <case condition="Customer tanya umum (jam buka, alamat, lokasi, kontak) tanpa intent order">
           <step name="Jawab Info Umum">
-            Jawab singkat dari KB: Alamat Jln. Cicalengka Raya No 8, Antapani Bandung 40291. Jam 08.30-18.30 WIB. IG @jale.floristt. WA 081367931303. Website katalog: jaleflorist.com. Setelah jawab, tawarkan lanjut konsultasi bouquet untuk acara tertentu. Maks 2 bubble.
+            Jawab singkat dari KB: Alamat Jln. Cicalengka Raya No 8, Antapani Bandung 40291. Jam 08.30-18.30 WIB. IG @jale.floristt. WA 0895402765380. Website katalog: jaleflorist.com. Setelah jawab, tawarkan lanjut konsultasi bouquet untuk acara tertentu. Maks 2 bubble.
           </step>
         </case>
       </branch>

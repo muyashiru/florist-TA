@@ -32,18 +32,21 @@ export default function Overview() {
           const fetchedOrders = d.data;
           const pickup = [];
           const delivery = [];
-          fetchedOrders.forEach(o => {
+          fetchedOrders.forEach((o, idx) => {
             const mappedOrder = {
-              id: 'ORD-' + o.id,
+              nomor: idx + 1,
+              id: o.id,
+              no_wa: o.no_wa,
+              customer_name: o.customer_name,
               product: o.product,
-              date: o.delivery_date || o.created_at,
+              delivery_date: o.delivery_date,
               address: o.address,
-              name: o.customer_name,
-              phone: o.no_wa,
-              notes: '-', // Jika ada field notes di DB bisa dipakai, untuk sekarang '-'
-              status: o.status
+              status: o.status,
+              biteship_order_id: o.biteship_order_id,
+              resi: o.resi,
+              created_at: new Date(o.created_at).toLocaleString('id-ID')
             };
-            if (!o.resi || o.resi === '-' || o.address.toLowerCase().includes('toko') || o.address.toLowerCase().includes('ambil')) {
+            if (o.resi === 'PICKUP' || o.address.toLowerCase().includes('toko') || o.address.toLowerCase().includes('ambil')) {
               pickup.push(mappedOrder);
             } else {
               delivery.push(mappedOrder);
@@ -298,57 +301,44 @@ export default function Overview() {
                 
                 <div className="p-0 overflow-x-auto">
                   {ordersData[orderTab].length > 0 ? (
-                    <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left border-collapse min-w-[1200px]">
                       <thead>
                         <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-black text-gray-500 tracking-widest uppercase">
-                          <th className="p-5 pl-8 whitespace-nowrap">ID Pesanan</th>
-                          <th className="p-5 min-w-[250px]">Produk & Notes</th>
-                          <th className="p-5 whitespace-nowrap">Pemesan</th>
-                          {orderTab === 'delivery' && <th className="p-5 min-w-[250px]">Alamat Tujuan</th>}
-                          <th className="p-5 whitespace-nowrap">Waktu</th>
-                          <th className="p-5 pr-8 text-right whitespace-nowrap">Status</th>
+                          <th className="p-4 pl-6 whitespace-nowrap">Nomor</th>
+                          <th className="p-4 whitespace-nowrap">No Wa</th>
+                          <th className="p-4 whitespace-nowrap">Nama Customer</th>
+                          <th className="p-4 min-w-[200px]">Produk</th>
+                          <th className="p-4 whitespace-nowrap">Tanggal {orderTab === 'delivery' ? 'Pengiriman' : 'Pengambilan'}</th>
+                          {orderTab === 'delivery' && <th className="p-4 min-w-[200px]">Alamat</th>}
+                          <th className="p-4 whitespace-nowrap">Status</th>
+                          <th className="p-4 whitespace-nowrap">Order Id</th>
+                          <th className="p-4 whitespace-nowrap">Resi</th>
+                          <th className="p-4 whitespace-nowrap">Tgl Pesan</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {ordersData[orderTab].map((order) => (
-                          <tr key={order.id} onClick={() => setSelectedOrder(order)} className="hover:bg-blue-50/50 transition-colors group cursor-pointer">
-                            <td className="p-5 pl-8 align-top">
-                              <span className="text-xs font-black text-[#00BFA5] bg-[#E0F2F1] px-3 py-1.5 rounded-md tracking-wider whitespace-nowrap border border-[#b2dfdb]">{order.id}</span>
-                            </td>
-                            <td className="p-5 align-top">
-                              <h3 className="font-bold text-base text-gray-800 mb-1.5 group-hover:text-blue-600 transition-colors">{order.product}</h3>
-                              {order.notes !== '-' && order.notes !== '' && (
-                                <div className="inline-block mt-2 w-full max-w-sm">
-                                  <p className="text-[10px] font-black text-gray-400 mb-1 tracking-widest">NOTES UCAPAN:</p>
-                                  <p className="text-xs text-gray-600 italic bg-white p-3 rounded-lg border border-gray-200 shadow-sm line-clamp-2">"{order.notes}"</p>
-                                </div>
-                              )}
-                            </td>
-                            <td className="p-5 align-top">
-                              <p className="font-bold text-gray-800 text-sm">{order.name}</p>
-                              <p className="text-xs text-gray-500 font-medium mt-1 bg-gray-100 inline-block px-2 py-0.5 rounded">{order.phone}</p>
-                            </td>
-                            {orderTab === 'delivery' && (
-                              <td className="p-5 align-top">
-                                <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{order.address}</p>
-                              </td>
-                            )}
-                            <td className="p-5 align-top">
-                              <div className="flex items-center gap-2 text-gray-700 mb-1">
-                                <svg className="w-4 h-4 shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <span className="text-sm font-bold whitespace-nowrap">{String(order.date).split(', ')[1] || String(order.date)}</span>
-                              </div>
-                              <span className="block text-xs font-medium text-gray-500 ml-6">{String(order.date).split(', ')[0] || ''}</span>
-                            </td>
-                            <td className="p-5 pr-8 align-top text-right">
-                              <span className={`inline-flex text-xs px-3 py-1.5 rounded-lg font-black tracking-wide whitespace-nowrap shadow-sm ${order.status === 'Siap Diambil' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-yellow-100 text-yellow-700 border border-yellow-300'}`}>
+                          <tr key={order.id} onClick={() => setSelectedOrder(order)} className="hover:bg-blue-50/50 transition-colors group cursor-pointer text-sm text-gray-700">
+                            <td className="p-4 pl-6 align-middle font-bold text-gray-500">{order.nomor}</td>
+                            <td className="p-4 align-middle font-medium bg-gray-50/50">{order.no_wa}</td>
+                            <td className="p-4 align-middle font-bold text-gray-800">{order.customer_name}</td>
+                            <td className="p-4 align-middle group-hover:text-blue-600 transition-colors font-medium">{order.product}</td>
+                            <td className="p-4 align-middle font-medium text-blue-600">{order.delivery_date}</td>
+                            {orderTab === 'delivery' && <td className="p-4 align-middle text-xs line-clamp-2 mt-2">{order.address}</td>}
+                            <td className="p-4 align-middle">
+                              <span className={`inline-flex text-xs px-2.5 py-1 rounded-md font-bold tracking-wide shadow-sm whitespace-nowrap ${order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' : 'bg-green-100 text-green-700 border border-green-300'}`}>
                                 {order.status}
                               </span>
                             </td>
+                            <td className="p-4 align-middle text-xs font-mono bg-gray-50">{order.biteship_order_id}</td>
+                            <td className="p-4 align-middle text-xs font-mono">{order.resi}</td>
+                            <td className="p-4 align-middle text-xs text-gray-500">{order.created_at}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -455,17 +445,25 @@ export default function Overview() {
                   <p className="text-gray-400 text-xs font-black mb-1.5 tracking-widest uppercase">Waktu {orderTab === 'pickup' ? 'Ambil' : 'Kirim'}</p>
                   <p className="font-bold text-gray-800 flex items-center gap-2 text-base">
                     <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {selectedOrder.date}
+                    {selectedOrder.delivery_date}
                   </p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-xs font-black mb-1.5 tracking-widest uppercase">Pemesan</p>
-                  <p className="font-bold text-gray-800 text-base">{selectedOrder.name}</p>
-                  <p className="text-sm font-medium text-gray-500 mt-0.5">{selectedOrder.phone}</p>
+                  <p className="font-bold text-gray-800 text-base">{selectedOrder.customer_name}</p>
+                  <p className="text-sm font-medium text-gray-500 mt-0.5">{selectedOrder.no_wa}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs font-black mb-1.5 tracking-widest uppercase">Biteship Order ID</p>
+                  <p className="font-mono text-gray-800 bg-white border border-gray-200 px-3 py-1 rounded inline-block text-xs">{selectedOrder.biteship_order_id}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs font-black mb-1.5 tracking-widest uppercase">Nomor Resi / Waybill</p>
+                  <p className="font-mono text-gray-800 bg-white border border-gray-200 px-3 py-1 rounded inline-block text-xs">{selectedOrder.resi}</p>
                 </div>
               </div>
               
-              {selectedOrder.address && (
+              {selectedOrder.address && selectedOrder.address !== 'Diambil ke toko' && (
                 <div className="mb-8">
                   <p className="text-gray-400 text-xs font-black mb-2 tracking-widest uppercase flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -473,16 +471,6 @@ export default function Overview() {
                   </p>
                   <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100">
                     <p className="text-gray-800 font-medium leading-relaxed">{selectedOrder.address}</p>
-                  </div>
-                </div>
-              )}
-              
-              {selectedOrder.notes && selectedOrder.notes !== '-' && (
-                <div className="mb-2">
-                  <p className="text-gray-400 text-xs font-black mb-2 tracking-widest uppercase">Notes / Ucapan</p>
-                  <div className="bg-orange-50 text-orange-900 italic p-5 rounded-2xl border border-orange-100 shadow-sm relative">
-                    <span className="absolute -top-4 -left-3 text-5xl text-orange-200">"</span>
-                    <p className="relative z-10 font-medium">{selectedOrder.notes}</p>
                   </div>
                 </div>
               )}
