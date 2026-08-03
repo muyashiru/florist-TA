@@ -2380,5 +2380,91 @@
         "message_text": "Halo Kak! Pesanan Kakak sudah kami proses ya 🌸✨\n\n*DETAIL PESANAN*\n🛍️ Item: Bouquet Artificial XL 007 (BAXL_007) x1\n\n*PENGAMBILAN DI TOKO*\n👤 Atas Nama: Rafa\n📞 No. HP: 08123455556\n📅 Waktu Pengambilan: Selasa, 4 Agustus 2026, jam 12.00 WIB\n\n📍 Lokasi Toko:\nJalé Florist\nJl. Cicalengka Raya No.8, Antapani Kidul, Kec. Antapani, Kota Bandung, Jawa Barat 40291\n(Atau bisa cari 'Jalé Florist' di Google Maps)\n\nTerima kasih banyak sudah berbelanja di Jalé Florist! Kami tunggu kedatangannya ya Kak 🌸"
       }
     ]
+  },
+  {
+    "id": "1785777468641",
+    "name": "Skenario 52 (Dikirim)",
+    "messages": [
+      {
+        "sender": "customer",
+        "message_text": "halo min ada rekomendasi buket buat wisuda ga"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Halo Kak! Selamat datang di Jalé Florist 🌸 Untuk wisuda, Jale punya beberapa rekomendasi yang bisa Kakak pertimbangkan, nih:\n\n1. *Bouquet Graduation Artificial 006* – Rp 249.000  \n2. *Bouquet Artificial XXL 035* – Rp 450.000  \n3. *Money Bouquet Artificial 046* – Rp 235.000  \n\nKak bisa lihat koleksi lengkapnya di website jaleflorist.com ya 😊 Kalau ada yang menarik, nanti Jale bantu proses pesanannya ✨"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Money Bouquet Artificial 046*\n💰 Harga: Rp 235.000\n[IMAGE]/images/produk/money-bucket/MBA30lbr_046_Harga 235K.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Graduation Artificial 006*\n💰 Harga: Rp 249.000\n[IMAGE]/images/produk/custom-bucket/BGRADARTIF_006_Harga 249K.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial XXL 035*\n💰 Harga: Rp 450.000\n[IMAGE]/images/produk/bouquet-artificial/xxl/Baxxl_035_Harga 450k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "selain bouquet graduation artificial  006 ada yang lain ga"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Ada Kak! Selain Bouquet Graduation Artificial 006, untuk wisuda bisa juga pilih *Bouquet Artificial XXL 006* (Rp 450.000), *Bouquet Artificial Large 006* (Rp 220.000), atau *Bouquet Artificial Medium 006* (Rp 135.000) 🌸\n\nKalau mau lihat lebih banyak variasi, Kakak bisa cek koleksi lengkapnya di website jaleflorist.com ya ✨"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Graduation Artificial 006*\n💰 Harga: Rp 249.000\n[IMAGE]/images/produk/custom-bucket/BGRADARTIF_006_Harga 249K.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial XXL 006*\n💰 Harga: Rp 450.000\n[IMAGE]/images/produk/bouquet-artificial/xxl/Baxxl_006_Harga 450k.webp"
+      },
+      {
+        "sender": "ai",
+        "message_text": "🌸 *Bouquet Artificial Large 006*\n💰 Harga: Rp 220.000\n[IMAGE]/images/produk/bouquet-artificial/l/Bal_006_Harga 220k.webp"
+      },
+      {
+        "sender": "customer",
+        "message_text": "okay saya mau pesan graduatio artifical 006 dikirim buat tanggal 10 agustus jam 4 sore"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, untuk tanggal 10 Agustus 2026 aman ya, karena masih H-6 dan memenuhi minimal H-1 untuk bouquet artificial 🌸✨\n\nSilakan dilengkapi data pemesanan berikut ya Kak 🙏\n\nAttention !!\n• Seluruh harga bunga di luar ongkos kirim\n• Waktu pengantaran diusahakan dicantumkan 1-2 jam sebelum bunga ingin diterima\n• Bunganya tidak bisa 100% sama persis dengan referensi ya Kak, tapi untuk ukuran, bentuk & tone kita pastikan semirip mungkin 🌸\n• Jika pembayaran sudah masuk, pesanan tidak bisa dibatalkan dan uang tidak bisa dikembalikan\n\nSilakan lengkapi data pemesanan berikut ya Kak 🌷\nNama penerima : [ISI]\nNo hp penerima : [ISI]\nJenis order : *Bouquet Graduation Artificial 006*\nJumlah order : 1\nAlamat Pengiriman Lengkap dan Kode Pos : [ISI]\nHari dan Waktu pengantaran : *10 Agustus 2026, jam 16.00 WIB*\nIsi Ucapan/Notes (Jika ada) : [ISI]"
+      },
+      {
+        "sender": "customer",
+        "message_text": "nama penerima Rival, alamat pengiriman Jl. Banteng No. 29, RT 02/RW 04, Kel. Turangga, Kec. Lengkong, Kota Bandung, Jawa Barat 40264, no penerima : 089944445555, notesnya : Selamat wisuda sayangku"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Terima kasih Kak, datanya sudah lengkap 👍 Berikut detail pesanannya ya:\n\n*Detail Pesanan:*\n*Penerima:* Rival\n*No HP:* 089944445555\n*Alamat:* Jl. Banteng No. 29, RT 02/RW 04, Kel. Turangga, Kec. Lengkong, Kota Bandung 40264\n*Produk:* Bouquet Graduation Artificial 006\n*Waktu:* 10 Agustus 2026, jam 16.00 WIB\n*Ucapan:* Selamat wisuda sayangku 🌸\n\nApakah data pesanan ini sudah benar Kak? 😊"
+      },
+      {
+        "sender": "customer",
+        "message_text": "ya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "Baik Kak, terima kasih! Berikut rincian tagihannya 💐\n\n- *Bouquet Graduation Artificial 006* : Rp 249.000\n- *Estimasi Ongkir* (Gojek/Lalamove Bandung): Rp 35.000\n- *Total Pembayaran* : Rp 284.000\n\nSilakan melakukan pembayaran via *QRIS Jalé Florist* ya Kak. Setelah itu, kirimkan bukti transfernya untuk diverifikasi tim admin kami 😊🙏\n[IMAGE]/images/qris/QRIS-Jale-Florist.jpg"
+      },
+      {
+        "sender": "customer",
+        "message_text": "[Mengirimkan Foto] ini bukti tfnya"
+      },
+      {
+        "sender": "ai",
+        "message_text": "[ESCALATION][HANDOFF] Alasan: Pelanggan mengirimkan bukti transfer yang perlu diverifikasi admin. | Draft: Terima kasih Kak, bukti pembayarannya sudah kami terima dan akan segera diverifikasi oleh tim admin ya 🙏"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak, pembayaran DP/Lunas sudah kami terima ya! Pesanan segera kami proses 🌸"
+      },
+      {
+        "sender": "admin",
+        "message_text": "Halo Kak! Pesanan Kakak sudah dijadwalkan untuk pengiriman ya 🚚💨\n\n*DETAIL PENGIRIMAN*\n🛍️ Item: Bouquet Graduation Artificial 006\n📦 Ekspedisi: GOJEK INSTANT\n📅 Waktu Pick-up: 10 Agustus 2026, jam 16.00 WIB\n\n*TUJUAN PENGIRIMAN*\n👤 Penerima: Rival\n📞 No. HP: 089944445555\n📍 Alamat: Jl. Banteng No. 29, RT 02/RW 04, Kel. Turangga, Kec. Lengkong, Kota Bandung 40264\n\nLacak status pesanan Kakak di sini:\n👉 https://track.biteship.com/6a70cd26d3fcc59d1a85dd38?environment=development\n\n*(Catatan: Karena ini pesanan terjadwal, halaman pelacakan mungkin baru akan aktif atau memunculkan nama kurir pada hari H pengiriman ya, Kak!)*\n\nTerima kasih sudah berbelanja di Jalé Florist! Ditunggu kedatangan bunganya ya 🌸"
+      }
+    ]
   }
 ]

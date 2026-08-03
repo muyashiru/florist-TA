@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { products as localProducts } from '../data/products';
 
 export default function Overview() {
   const navigate = useNavigate();
@@ -12,22 +13,18 @@ export default function Overview() {
   const [stats, setStats] = useState({ totalChats: 0, aiPercentage: 0, aiCount: 0, activeOrders: 0 });
   const [trends, setTrends] = useState({ busyHours: [1, 1, 1, 1, 1, 1, 1], topProducts: [] });
   const [ordersData, setOrdersData] = useState({ pickup: [], delivery: [] });
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'Diproses', 'Selesai'
   
   const [aiChat, setAiChat] = useState([
     { sender: 'ai', text: 'Halo Admin! Saya adalah AI Copilot tingkat tinggi yang bisa membaca dan merangkum database chat pelanggan secara real-time. Ada yang bisa saya analisis hari ini?' }
   ]);
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    fetch('http://localhost:3000/api/admin/overview/stats')
-      .then(r => r.json())
-      .then(d => { if(d.success) setStats(d.data); })
-      .catch(console.error);
-
+  const fetchOrders = () => {
     fetch('http://localhost:3000/api/admin/orders')
       .then(r => r.json())
       .then(d => { 
-
         if (d.success) {
           const fetchedOrders = d.data;
           const pickup = [];
@@ -44,7 +41,8 @@ export default function Overview() {
               status: o.status,
               biteship_order_id: o.biteship_order_id,
               resi: o.resi,
-              created_at: new Date(o.created_at).toLocaleString('id-ID')
+              created_at: new Date(o.created_at).toLocaleString('id-ID'),
+              raw_date: new Date(o.created_at).getTime()
             };
             if (o.resi === 'PICKUP' || o.address.toLowerCase().includes('toko') || o.address.toLowerCase().includes('ambil')) {
               pickup.push(mappedOrder);
@@ -56,7 +54,34 @@ export default function Overview() {
         }
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/admin/overview/stats')
+      .then(r => r.json())
+      .then(d => { if(d.success) setStats(d.data); })
+      .catch(console.error);
+    fetchOrders();
   }, []);
+
+  const handleStatusChange = async (e, id, newStatus) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await fetch(`http://localhost:3000/api/admin/orders/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        if (selectedOrder && selectedOrder.id === id) {
+          setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+        }
+        fetchOrders(); // Refresh table data
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/admin/overview/trends?filter=${timeFilter}`)
@@ -96,6 +121,26 @@ export default function Overview() {
     } finally {
       setIsLoadingAi(false);
     }
+  };
+
+  const getProductImage = (productName) => {
+    if (!productName) return [];
+    
+    // Split the products by comma and extract all images
+    const items = productName.split(',');
+    const images = [];
+    
+    items.forEach(item => {
+      const matched = localProducts.find(p => 
+        item.toLowerCase().includes(p.name.toLowerCase()) || 
+        (p.id && item.includes(p.id))
+      );
+      if (matched && matched.image && !images.includes(matched.image)) {
+        images.push(matched.image);
+      }
+    });
+    
+    return images;
   };
 
   return (
@@ -298,6 +343,33 @@ export default function Overview() {
                     </button>
                   </div>
                 </div>
+
+                {/* Filters and Sorts */}
+                <div className="flex gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Urutkan:</label>
+                    <select 
+                      value={sortOrder} 
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                    >
+                      <option value="newest">Terbaru (A-Z / Z-A)</option>
+                      <option value="oldest">Terlama</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status:</label>
+                    <select 
+                      value={filterStatus} 
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                    >
+                      <option value="all">Semua</option>
+                      <option value="Diproses">Diproses</option>
+                      <option value="Selesai">Selesai</option>
+                    </select>
+                  </div>
+                </div>
                 
                 <div className="p-0 overflow-x-auto">
                   {ordersData[orderTab].length > 0 ? (
@@ -318,18 +390,36 @@ export default function Overview() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {ordersData[orderTab].map((order) => (
+                        {ordersData[orderTab]
+                          .filter(order => filterStatus === 'all' || order.status === filterStatus)
+                          .sort((a, b) => sortOrder === 'newest' ? b.raw_date - a.raw_date : a.raw_date - b.raw_date)
+                          .map((order) => (
                           <tr key={order.id} onClick={() => setSelectedOrder(order)} className="hover:bg-blue-50/50 transition-colors group cursor-pointer text-sm text-gray-700">
                             <td className="p-4 pl-6 align-middle font-bold text-gray-500">{order.nomor}</td>
                             <td className="p-4 align-middle font-medium bg-gray-50/50">{order.no_wa}</td>
                             <td className="p-4 align-middle font-bold text-gray-800">{order.customer_name}</td>
                             <td className="p-4 align-middle group-hover:text-blue-600 transition-colors font-medium">{order.product}</td>
                             <td className="p-4 align-middle font-medium text-blue-600">{order.delivery_date}</td>
-                            {orderTab === 'delivery' && <td className="p-4 align-middle text-xs line-clamp-2 mt-2">{order.address}</td>}
+                            {orderTab === 'delivery' && (
+                              <td className="p-4 align-middle">
+                                <div className="text-xs line-clamp-2">{order.address}</div>
+                              </td>
+                            )}
                             <td className="p-4 align-middle">
-                              <span className={`inline-flex text-xs px-2.5 py-1 rounded-md font-bold tracking-wide shadow-sm whitespace-nowrap ${order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' : 'bg-green-100 text-green-700 border border-green-300'}`}>
-                                {order.status}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex text-xs px-2.5 py-1 rounded-md font-bold tracking-wide shadow-sm whitespace-nowrap ${order.status === 'Diproses' ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' : 'bg-green-100 text-green-700 border border-green-300'}`}>
+                                  {order.status}
+                                </span>
+                                {order.status === 'Diproses' && (
+                                  <button 
+                                    onClick={(e) => handleStatusChange(e, order.id, 'Selesai')}
+                                    className="text-xs bg-gray-100 hover:bg-green-500 hover:text-white px-2 py-1 rounded-md transition-colors border border-gray-200"
+                                    title="Tandai Selesai"
+                                  >
+                                    ✓
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="p-4 align-middle text-xs font-mono bg-gray-50">{order.biteship_order_id}</td>
                             <td className="p-4 align-middle text-xs font-mono">{order.resi}</td>
@@ -431,12 +521,34 @@ export default function Overview() {
             </div>
             
             <div className="p-8">
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h4 className="text-2xl font-black text-gray-800">{selectedOrder.product}</h4>
-                  <span className={`inline-flex mt-3 text-xs px-3 py-1.5 rounded-lg font-black tracking-wide ${selectedOrder.status === 'Siap Diambil' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
-                    STATUS: {selectedOrder.status.toUpperCase()}
-                  </span>
+              <div className="flex gap-6 items-start mb-8">
+                {getProductImage(selectedOrder.product).length > 0 && (
+                  <div className="flex gap-2 shrink-0 flex-wrap max-w-[200px]">
+                    {getProductImage(selectedOrder.product).map((img, idx) => (
+                      <img 
+                        key={idx}
+                        src={img} 
+                        alt={`Product ${idx+1}`} 
+                        className="w-20 h-20 object-cover rounded-xl shadow-sm border border-gray-200"
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h4 className="text-2xl font-black text-gray-800 leading-tight">{selectedOrder.product}</h4>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className={`inline-flex text-xs px-3 py-1.5 rounded-lg font-black tracking-wide ${selectedOrder.status === 'Selesai' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
+                      STATUS: {selectedOrder.status.toUpperCase()}
+                    </span>
+                    {selectedOrder.status !== 'Selesai' && (
+                      <button 
+                        onClick={(e) => handleStatusChange(e, selectedOrder.id, 'Selesai')}
+                        className="text-xs bg-gray-100 text-gray-600 hover:bg-green-500 hover:text-white hover:border-green-600 px-3 py-1.5 rounded-lg transition-colors border border-gray-300 font-bold tracking-wide"
+                      >
+                        ✓ TANDAI SELESAI
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               

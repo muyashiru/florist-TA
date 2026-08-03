@@ -289,6 +289,18 @@ app.get('/api/admin/orders', async (req, res) => {
     }
 });
 
+// Update status pesanan
+app.post('/api/admin/orders/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+        res.json({ success: true, message: 'Status berhasil diubah' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // 4. Copilot AI
 app.post('/api/admin/overview/copilot', async (req, res) => {
     try {
